@@ -1,0 +1,11 @@
+{
+  "id": "com.mousegame.app.catchase",
+  "title": "Cat Chase",
+  "main": "index.html",
+  "icon": "icon.png",
+  "type": "web",
+  "vendor": "Mouse Game",
+  "version": "1.0.0",
+  "appDescription": "Cat chases the Magic Remote pointer",
+  "resolution": "1920x1080"
+}
