@@ -2,20 +2,13 @@
 
 A simple game for LG Smart TV: a cat chases the Magic Remote pointer. Use the pointer on TV or your mouse on Mac.
 
-## Test on Mac (simulator in browser)
+## Test in browser
 
 ```bash
-# Option A: open directly
 open index.html
-
-# Option B: local server (avoids file:// cursor quirks)
-npx -y serve . -p 3000
-# Then open http://localhost:3000
 ```
 
-Move the mouse — the cat follows. Same pointer events are used by the Magic Remote on TV.
-
-## Test in webOS TV Simulator (Mac)
+## Test in webOS TV Simulator
 
 1. Install [webOS TV SDK](https://webostv.developer.lge.com/develop/tools/simulator-installation) and **CLI** (includes `ares-*`).
 2. Add the simulator as a device (one-time):
@@ -30,30 +23,43 @@ Move the mouse — the cat follows. Same pointer events are used by the Magic Re
    ares-launch -d simulator com.mousegame.app.catchase
    ```
 
-## Package and install on your TV (OLED55C25LB)
+## Package and install on your TV
 
-1. **Enable Developer Mode** on the TV (install "Developer Mode" app from LG Content Store, open it and enable).
-2. **Install webOS CLI** and add your TV as a device:
+1. **Enable Developer Mode** on the TV:
+   - Open the **LG Content Store**, search for **"Developer Mode"** and install it
+   - Launch the app, sign in with your LG Developer account, and toggle **Dev Mode Status** on
+   - The TV will reboot automatically
+   - > The session expires after a few days — reopen the app and hit **Extend** to renew it. If it expires, all sideloaded apps are wiped.
+
+2. **Install webOS CLI:**
+   ```bash
+   npm install -g @webos-tools/cli
+   ares -V  # verify
+   ```
+
+3. **Find your TV's IP address:** Settings → Network → Wi-Fi Connection → Advanced Wi-Fi Settings
+
+4. **Add your TV as a device** (one-time):
    ```bash
    ares-setup-device
-   # Add → name (e.g. "mytv"), IP: your TV's IP, port: 9922
+   # Add → name (e.g. "mytv"), IP: your TV's IP, port: 9922, username: prisoner
    ares-novacom --device mytv --getkey
-   # Follow TV prompt to allow key.
+   # Accept the prompt that appears on the TV.
    ```
-3. **Package** the app:
+5. **Package** the app:
    ```bash
    ares-package .
    ```
-   This creates `com.mousegame.app.catchase_1.0.0_all.ipk` in the current directory.
+   This creates `com.mousegame.app.0.0_all.ipk` in the current directory.
 
-4. **Install** on the TV:
+6. **Install** on the TV:
    ```bash
-   ares-install -d mytv com.mousegame.app.catchase_1.0.0_all.ipk
+   ares-install -d mytv com.mousegame.app.0.0_all.ipk
    ```
 
-5. **Launch** on the TV:
+7. **Launch** on the TV:
    ```bash
-   ares-launch -d mytv com.mousegame.app.catchase
+   ares-launch -d mytv com.mousegame.app
    ```
    Or find "Cat Chase" in the TV app launcher.
 
