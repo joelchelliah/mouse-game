@@ -10,14 +10,18 @@ html, body {
 
 #cat {
   position: fixed;
-  width: 80px;
-  height: 80px;
+  width: 128px;
+  height: 128px;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   transition: none;
   pointer-events: none;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='36' r='20' fill='%23f4a460'/%3E%3Ccircle cx='26' cy='32' r='3' fill='%23222'/%3E%3Ccircle cx='38' cy='32' r='3' fill='%23222'/%3E%3Cpath d='M32 42 Q28 38 32 36 Q36 38 32 42' fill='%23222'/%3E%3Cpath d='M12 28 L8 20 L12 16 L16 24 Z' fill='%23f4a460'/%3E%3Cpath d='M52 28 L56 20 L52 16 L48 24 Z' fill='%23f4a460'/%3E%3Cpath d='M28 54 Q32 58 36 54' stroke='%23222' stroke-width='2' fill='none'/%3E%3C/svg%3E") center/contain no-repeat;
+  background-image: url("assets/walk.png");
+  background-size: 1024px 128px; /* 8 frames × 128px, scaled up 8× from 128×16 */
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  image-rendering: pixelated;
 }
 
 #star {
