@@ -2,9 +2,10 @@ const STAR_MIN_SIZE = 1.0; // scale when pointer is still
 const STAR_MAX_SIZE = 2.5; // scale when pointer is moving fast
 const STAR_ROT_MIN_SPEED = 0.75; // degrees per frame when pointer is still
 const STAR_ROT_MAX_SPEED = 7.5; // degrees per frame when pointer is moving fast
-const STAR_LERP = 0.25; // how quickly star catches pointer (0=never, 1=instant)
+const STAR_LERP = 0.1; // how quickly star catches pointer (0=never, 1=instant)
 
 const el = document.getElementById("star");
+const lightEl = document.getElementById("star-light");
 
 export let x = window.innerWidth / 2;
 export let y = window.innerHeight / 2;
@@ -35,6 +36,8 @@ export function update(targetX, targetY) {
 
   el.style.left = x + "px";
   el.style.top = y + "px";
+  lightEl.style.left = x + "px";
+  lightEl.style.top = y + "px";
   el.style.transform =
     "translate(-50%, -50%) scale(" +
     scale.toFixed(3) +
