@@ -43,7 +43,7 @@ open index.html
    ```bash
    ares-setup-device
    # Add → name (e.g. "mytv"), IP: your TV's IP, port: 9922, username: prisoner
-   ares-novacom --device mytv --getkey
+   ares-novacom --device my-tv --getkey
    # Accept the prompt that appears on the TV.
    ```
 5. **Package** the app:
@@ -54,20 +54,19 @@ open index.html
 
 6. **Install** on the TV:
    ```bash
-   ares-install -d mytv com.mousegame.app.0.0_all.ipk
+   ares-install --device my-tv com.mousegame.app.0.0_all.ipk
    ```
 
 7. **Launch** on the TV:
    ```bash
-   ares-launch -d mytv com.mousegame.app
+   ares-launch --device my-tv com.mousegame.app
    ```
    Or find "Cat Chase" in the TV app launcher.
 
-## Regenerating the icon
-
-```bash
-node scripts/generate-icon.js
-```
+8. **Reinstall & Reload** one-liner:
+   ```bash
+   ares-package . && ares-install --device my-tv com.mousegame.app_1.0.0_all.ipk && ares-launch --device my-tv com.mousegame.app
+   ```
 
 ## Links
 
