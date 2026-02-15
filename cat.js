@@ -1,19 +1,17 @@
-// --- Tuning constants ---
-const CAT_MAX_SPEED = 0.025;      // lerp factor when chasing (higher = faster)
-const CAT_START_DIST = 200;       // px from star before cat begins moving
-const CAT_STOP_DIST = 100;        // px from star before cat stops moving
-const FRAME_W = 128;              // display px per frame
+const CAT_MAX_SPEED = 0.025; // lerp factor when chasing (higher = faster)
+const CAT_START_DIST = 200; // px from star before cat begins moving
+const CAT_STOP_DIST = 100; // px from star before cat stops moving
+const FRAME_W = 128; // display px per frame
 const TICKS_PER_FRAME_MOVING = 6; // ~10fps at 60fps
 const TICKS_PER_FRAME_IDLE = 8;
-const IDLE_LICK_THRESHOLD = 20;   // animation frames before lick triggers
+const IDLE_LICK_THRESHOLD = 20; // animation frames before lick triggers
 const SPRITES = {
-  walk:  { url: "assets/walk.png",  frames: 8 },
-  sit:   { url: "assets/sit.png",   frames: 4 },
-  sit2:  { url: "assets/sit2.png",  frames: 4 },
-  lick:  { url: "assets/lick.png",  frames: 4 },
-  lick2: { url: "assets/lick2.png", frames: 4 },
+  walk: { url: "assets/cat/walk.png", frames: 8 },
+  sit: { url: "assets/cat/sit.png", frames: 4 },
+  sit2: { url: "assets/cat/sit2.png", frames: 4 },
+  lick: { url: "assets/cat/lick.png", frames: 4 },
+  lick2: { url: "assets/cat/lick2.png", frames: 4 },
 };
-// -------------------------
 
 const el = document.getElementById("cat");
 
@@ -25,10 +23,10 @@ let frame = 0;
 let currentSprite = "walk";
 
 // Idle animation state machine
-let idleFrames = 0;          // counts completed animation frames while idle
-let lickPlaysLeft = 0;       // how many full lick cycles remain
-let idlePhase = "sit";       // "sit" | "lick"
-let nextSitSprite = "sit";   // which sit variant plays next
+let idleFrames = 0; // counts completed animation frames while idle
+let lickPlaysLeft = 0; // how many full lick cycles remain
+let idlePhase = "sit"; // "sit" | "lick"
+let nextSitSprite = "sit"; // which sit variant plays next
 
 function setSprite(name) {
   currentSprite = name;
@@ -55,7 +53,8 @@ export function update(starX, starY) {
 
   el.style.left = x + "px";
   el.style.top = y + "px";
-  el.style.transform = "translate(-50%, -50%) scaleX(" + (dx < 0 ? -1 : 1) + ")";
+  el.style.transform =
+    "translate(-50%, -50%) scaleX(" + (dx < 0 ? -1 : 1) + ")";
 
   // Detect movement → idle transition and reset idle state
   const wasMoving = currentSprite === "walk";
@@ -68,7 +67,9 @@ export function update(starX, starY) {
   // Determine desired sprite
   const desiredSprite = moving
     ? "walk"
-    : idlePhase === "lick" ? currentSprite : nextSitSprite;
+    : idlePhase === "lick"
+      ? currentSprite
+      : nextSitSprite;
 
   if (desiredSprite !== currentSprite) setSprite(desiredSprite);
 

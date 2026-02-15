@@ -16,7 +16,7 @@ html, body {
   transform: translate(-50%, -50%);
   transition: none;
   pointer-events: none;
-  background-image: url("assets/walk.png");
+  background-image: url("assets/cat/walk.png");
   background-size: 1024px 128px; /* 8 frames × 128px, scaled up 8× from 128×16 */
   background-repeat: no-repeat;
   background-position: 0 0;
@@ -38,7 +38,7 @@ html, body {
   transition: none;
   pointer-events: none;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpolygon points='32,4 39,24 60,24 44,37 50,58 32,45 14,58 20,37 4,24 25,24' fill='%23ffe066' stroke='%23f0a500' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
-  animation: star-radiate 1.4s ease-in-out infinite;
+  animation: star-radiate 1.0s ease-in-out infinite;
 }
 
 #hint {
@@ -47,5 +47,5 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   color: rgba(255,255,255,0.5);
-  font-size: 16px;
+  font-size: 20px;
 }
