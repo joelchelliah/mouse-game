@@ -1,5 +1,5 @@
-const CAT_RUN_SPEED = 0.03;
-const CAT_WALK_SPEED = 0.015;
+const CAT_RUN_SPEED = 0.02;
+const CAT_WALK_SPEED = 0.01;
 const CAT_START_DIST = 200; // px from star before cat begins moving
 const CAT_STOP_DIST = 100; // px from star before cat stops moving
 const CAT_RUN_DIST = 400; // px from star before cat runs instead of walks

@@ -1,3 +1,5 @@
+import { burst } from "./particles.js";
+
 const STAR_MIN_SIZE = 1.0; // scale when pointer is still
 const STAR_MAX_SIZE = 2.5; // scale when pointer is moving fast
 const STAR_ROT_MIN_SPEED = 0.75; // degrees per frame when pointer is still
@@ -20,6 +22,7 @@ function setActive(value) {
   active = value;
   el.classList.toggle("star--passive", !active);
   lightEl.classList.toggle("star--passive", !active);
+  burst(x, y, active);
 }
 
 document.addEventListener("click", function () {
