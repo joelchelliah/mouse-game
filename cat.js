@@ -1,12 +1,15 @@
-const CAT_MAX_SPEED = 0.025; // lerp factor when chasing (higher = faster)
+const CAT_RUN_SPEED = 0.03;
+const CAT_WALK_SPEED = 0.015;
 const CAT_START_DIST = 200; // px from star before cat begins moving
 const CAT_STOP_DIST = 100; // px from star before cat stops moving
+const CAT_RUN_DIST = 400; // px from star before cat runs instead of walks
 const FRAME_W = 128; // display px per frame
 const TICKS_PER_FRAME_MOVING = 6; // ~10fps at 60fps
 const TICKS_PER_FRAME_IDLE = 8;
 const IDLE_LICK_THRESHOLD = 20; // animation frames before lick triggers
 const SPRITES = {
   walk: { url: "assets/cat/walk.png", frames: 8 },
+  run: { url: "assets/cat/run.png", frames: 8 },
   sit: { url: "assets/cat/sit.png", frames: 4 },
   sit2: { url: "assets/cat/sit2.png", frames: 4 },
   lick: { url: "assets/cat/lick.png", frames: 4 },
@@ -47,8 +50,9 @@ export function update(starX, starY) {
   if (moving && dist < CAT_STOP_DIST) moving = false;
 
   if (moving) {
-    x += dx * CAT_MAX_SPEED;
-    y += dy * CAT_MAX_SPEED;
+    const speed = dist > CAT_RUN_DIST ? CAT_RUN_SPEED : CAT_WALK_SPEED;
+    x += dx * speed;
+    y += dy * speed;
   }
 
   el.style.left = x + "px";
@@ -57,7 +61,7 @@ export function update(starX, starY) {
     "translate(-50%, -50%) scaleX(" + (dx < 0 ? -1 : 1) + ")";
 
   // Detect movement → idle transition and reset idle state
-  const wasMoving = currentSprite === "walk";
+  const wasMoving = currentSprite === "walk" || currentSprite === "run";
   if (wasMoving && !moving) {
     idleFrames = 0;
     idlePhase = "sit";
@@ -66,7 +70,9 @@ export function update(starX, starY) {
 
   // Determine desired sprite
   const desiredSprite = moving
-    ? "walk"
+    ? dist > CAT_RUN_DIST
+      ? "run"
+      : "walk"
     : idlePhase === "lick"
       ? currentSprite
       : nextSitSprite;
