@@ -2,7 +2,7 @@
   const cat = document.getElementById("cat");
   const star = document.getElementById("star");
   // --- Tuning constants ---
-  const CAT_MAX_SPEED = 0.05; // lerp factor when chasing (higher = faster)
+  const CAT_MAX_SPEED = 0.025; // lerp factor when chasing (higher = faster)
   const CAT_START_DIST = 200; // px from star before cat begins moving
   const CAT_STOP_DIST = 100; // px from star before cat stops moving
 
@@ -10,10 +10,13 @@
   const STAR_MAX_SIZE = 2.5; // scale when pointer is moving fast
   const STAR_ROT_MIN_SPEED = 0.75; // degrees per frame when pointer is still
   const STAR_ROT_MAX_SPEED = 7.5; // degrees per frame when pointer is moving fast
+  const STAR_LERP = 0.25; // how quickly star catches pointer (0=never, 1=instant)
   // -------------------------
 
   let targetX = window.innerWidth / 2;
   let targetY = window.innerHeight / 2;
+  let starX = targetX;
+  let starY = targetY;
   let x = targetX;
   let y = targetY;
   let prevTargetX = targetX;
@@ -30,6 +33,7 @@
     sit: { url: "assets/sit.png", frames: 4 },
   };
   let currentSprite = "walk";
+
   function setTarget(clientX, clientY) {
     targetX = clientX;
     targetY = clientY;
@@ -51,8 +55,8 @@
   );
 
   function tick() {
-    const dx = targetX - x;
-    const dy = targetY - y;
+    const dx = starX - x;
+    const dy = starY - y;
     const dist = Math.hypot(dx, dy);
     if (!moving && dist > CAT_START_DIST) moving = true;
     if (moving && dist < CAT_STOP_DIST) moving = false;
@@ -79,6 +83,10 @@
       frame = (frame + 1) % SPRITES[currentSprite].frames;
       cat.style.backgroundPosition = -frame * FRAME_W + "px 0";
     }
+    // lerp star position toward raw pointer
+    starX += (targetX - starX) * STAR_LERP;
+    starY += (targetY - starY) * STAR_LERP;
+
     const pointerSpeed = Math.hypot(
       targetX - prevTargetX,
       targetY - prevTargetY,
@@ -94,8 +102,9 @@
       Math.min(pointerSpeed / 20, 1) *
         (STAR_ROT_MAX_SPEED - STAR_ROT_MIN_SPEED);
     starAngle = (starAngle + rotSpeed) % 360;
-    star.style.left = targetX + "px";
-    star.style.top = targetY + "px";
+
+    star.style.left = starX + "px";
+    star.style.top = starY + "px";
     star.style.transform =
       "translate(-50%, -50%) scale(" +
       starScale.toFixed(3) +
