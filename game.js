@@ -1,5 +1,8 @@
 import { update as updateCat } from "./cat.js";
 import { update as updateStar, x as starX, y as starY } from "./star.js";
+import { init as initFlowers, update as updateFlowers } from "./flowers.js";
+
+initFlowers();
 
 let targetX = window.innerWidth / 2;
 let targetY = window.innerHeight / 2;
@@ -24,6 +27,7 @@ document.addEventListener(
 );
 
 function tick() {
+  updateFlowers();
   updateStar(targetX, targetY);
   updateCat(starX, starY);
   requestAnimationFrame(tick);

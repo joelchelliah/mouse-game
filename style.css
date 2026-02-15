@@ -7,8 +7,20 @@ html, body {
   font-family: system-ui, sans-serif;
 }
 
+.flower {
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url("assets/flowers.png");
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  transform-origin: center center;
+  opacity: 0.7;
+}
+
 #cat {
   position: fixed;
+  z-index: 1;
   width: 128px;
   height: 128px;
   left: 50%;
@@ -43,6 +55,7 @@ html, body {
 
 #star-light {
   position: fixed;
+  z-index: 1;
   width: 350px;
   height: 350px;
   left: 0;
@@ -61,6 +74,7 @@ html, body {
 
 #star {
   position: fixed;
+  z-index: 1;
   width: 40px;
   height: 40px;
   left: 0;
@@ -74,6 +88,7 @@ html, body {
 
 #hint {
   position: fixed;
+  z-index: 1;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
