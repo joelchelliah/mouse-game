@@ -5,7 +5,7 @@ const FLOWER_SRC_SIZE = 85; // px per cell in source image
 const FLOWER_DRAW_SIZE_RANGE = [20, 80]; // display px range
 const FLOWER_MIN_LIFE = 4 * 60; // 3 seconds at 60fps
 const FLOWER_MAX_LIFE = 12 * 60; // 8 seconds at 60fps
-const SHRINK_TICKS = 45; // ticks to shrink out before removal
+const SHRINK_TICKS_RANGE = [30, 80]; // ticks to shrink out before removal
 const FLOWER_MAX_ANGLE = 90; // max rotation in degrees during grow/shrink
 
 const img = new Image();
@@ -51,11 +51,16 @@ function spawnFlower() {
   const startAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
   const endAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
 
+  const [minShrink, maxShrink] = SHRINK_TICKS_RANGE;
+  const shrinkTicks =
+    minShrink + Math.floor(Math.random() * (maxShrink - minShrink + 1));
+
   return {
     el,
     ticksLeft: randomLife(),
     shrinking: false,
     shrinkTick: 0,
+    shrinkTicks,
     scale: 0,
     growing: true,
     startAngle,
@@ -83,7 +88,7 @@ export function update() {
     const f = flowers[i];
 
     if (f.growing) {
-      f.scale = Math.min(1, f.scale + 1 / SHRINK_TICKS);
+      f.scale = Math.min(1, f.scale + 1 / f.shrinkTicks);
       const angle = f.startAngle * (1 - f.scale);
       f.el.style.transform =
         "scale(" + f.scale.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
@@ -93,11 +98,11 @@ export function update() {
 
     if (f.shrinking) {
       f.shrinkTick++;
-      const s = Math.max(0, 1 - f.shrinkTick / SHRINK_TICKS);
+      const s = Math.max(0, 1 - f.shrinkTick / f.shrinkTicks);
       const angle = f.endAngle * (1 - s);
       f.el.style.transform =
         "scale(" + s.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
-      if (f.shrinkTick >= SHRINK_TICKS) {
+      if (f.shrinkTick >= f.shrinkTicks) {
         removeFlower(f);
         flowers.splice(i, 1);
         flowers.push(spawnFlower());
