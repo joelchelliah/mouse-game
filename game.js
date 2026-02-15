@@ -1,5 +1,5 @@
 import { update as updateCat } from "./cat.js";
-import { update as updateStar, x as starX, y as starY } from "./star.js";
+import { update as updateStar, x as starX, y as starY, active as starActive } from "./star.js";
 import { init as initFlowers, update as updateFlowers } from "./flowers.js";
 
 initFlowers();
@@ -29,7 +29,7 @@ document.addEventListener(
 function tick() {
   updateFlowers();
   updateStar(targetX, targetY);
-  updateCat(starX, starY);
+  updateCat(starX, starY, starActive);
   requestAnimationFrame(tick);
 }
 

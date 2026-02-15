@@ -41,13 +41,17 @@ function setSprite(name) {
   el.style.backgroundPosition = "0 0";
 }
 
-export function update(starX, starY) {
+export function update(starX, starY, active) {
   const dx = starX - x;
   const dy = starY - y;
   const dist = Math.hypot(dx, dy);
 
-  if (!moving && dist > CAT_START_DIST) moving = true;
-  if (moving && dist < CAT_STOP_DIST) moving = false;
+  if (active) {
+    if (!moving && dist > CAT_START_DIST) moving = true;
+    if (moving && dist < CAT_STOP_DIST) moving = false;
+  } else {
+    moving = false;
+  }
 
   if (moving) {
     const speed = dist > CAT_RUN_DIST ? CAT_RUN_SPEED : CAT_WALK_SPEED;

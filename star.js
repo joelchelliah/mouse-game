@@ -9,11 +9,22 @@ const lightEl = document.getElementById("star-light");
 
 export let x = window.innerWidth / 2;
 export let y = window.innerHeight / 2;
+export let active = true;
 
 let prevTargetX = x;
 let prevTargetY = y;
 let scale = 1;
 let angle = 0;
+
+function setActive(value) {
+  active = value;
+  el.classList.toggle("star--passive", !active);
+  lightEl.classList.toggle("star--passive", !active);
+}
+
+document.addEventListener("click", function () {
+  setActive(!active);
+});
 
 export function update(targetX, targetY) {
   // lerp star position toward raw pointer
