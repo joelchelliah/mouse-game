@@ -1,7 +1,7 @@
 import { FPS } from "./config.js";
 
 const MAX_FLOWER_COUNT = 20;
-const FLOWER_SPAWN_INTERVAL = 5 * FPS;
+const FLOWER_SPAWN_INTERVAL = 3 * FPS;
 const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
 const FLOWER_SRC_SIZE = 85; // px per cell in source image
