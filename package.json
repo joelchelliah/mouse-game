@@ -1,0 +1,17 @@
+{
+  "name": "mouse-game",
+  "version": "1.0.0",
+  "description": "A simple game for LG Smart TV: a cat chases the Magic Remote pointer. Use the pointer on TV or your mouse on Mac.",
+  "main": "cat.js",
+  "scripts": {
+    "build": "esbuild src/game.js --bundle --outfile=bundle.js --platform=browser --minify",
+    "dev": "esbuild src/game.js --bundle --outfile=bundle.js --platform=browser --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.27.3",
+    "pixi.js": "^8.16.0"
+  }
+}

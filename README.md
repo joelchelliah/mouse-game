@@ -2,9 +2,30 @@
 
 A simple game for LG Smart TV: a cat chases the Magic Remote pointer. Use the pointer on TV or your mouse on Mac.
 
+Built with [PixiJS v8](https://pixijs.com/) and bundled with [esbuild](https://esbuild.github.io/).
+
+## Development
+
+Source files live in `src/`. A build step is required to produce `bundle.js`.
+
+```bash
+npm install
+```
+
+**Watch mode** (rebuilds on every save):
+```bash
+npm run dev
+```
+
+**Production build** (minified, ~545KB):
+```bash
+npm run build
+```
+
 ## Test in browser
 
 ```bash
+npm run build
 open index.html
 ```
 
@@ -16,8 +37,9 @@ open index.html
    ares-setup-device
    # Add, name e.g. "simulator", choose your simulator (e.g. webOS TV 24).
    ```
-3. Package, install, then launch in the simulator:
+3. Build, package, install, then launch in the simulator:
    ```bash
+   npm run build
    ares-package .
    ares-install -d simulator com.mousegame.app.catchase_1.0.0_all.ipk
    ares-launch -d simulator com.mousegame.app.catchase
@@ -46,15 +68,16 @@ open index.html
    ares-novacom --device my-tv --getkey
    # Accept the prompt that appears on the TV.
    ```
-5. **Package** the app:
+5. **Build and package** the app:
    ```bash
+   npm run build
    ares-package .
    ```
-   This creates `com.mousegame.app.0.0_all.ipk` in the current directory.
+   This creates `com.mousegame.app_1.0.0_all.ipk` in the current directory.
 
 6. **Install** on the TV:
    ```bash
-   ares-install --device my-tv com.mousegame.app.0.0_all.ipk
+   ares-install --device my-tv com.mousegame.app_1.0.0_all.ipk
    ```
 
 7. **Launch** on the TV:
@@ -65,7 +88,7 @@ open index.html
 
 8. **Reinstall & Reload** one-liner:
    ```bash
-   ares-package . && ares-install --device my-tv com.mousegame.app_1.0.0_all.ipk && ares-launch --device my-tv com.mousegame.app
+   npm run build && ares-package . && ares-install --device my-tv com.mousegame.app_1.0.0_all.ipk && ares-launch --device my-tv com.mousegame.app
    ```
 
 ## Links
@@ -73,3 +96,4 @@ open index.html
 - [webOS TV Developer](https://webostv.developer.lge.com/)
 - [Magic Remote guide](https://webostv.developer.lge.com/develop/guides/magic-remote)
 - [CLI guide](https://webostv.developer.lge.com/develop/tools/cli-dev-guide)
+- [PixiJS docs](https://pixijs.com/)

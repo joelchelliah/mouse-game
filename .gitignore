@@ -1,1 +1,3 @@
-com.mousegame.app_1.0.0_all.ipk
+node_modules/
+*.ipk
+bundle.js
