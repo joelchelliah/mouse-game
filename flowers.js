@@ -1,4 +1,5 @@
-const FLOWER_COUNT = 20;
+const MAX_FLOWER_COUNT = 20;
+const FLOWER_SPAWN_INTERVAL = 10 * 60; // 10 seconds at 60fps
 const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
 const FLOWER_SRC_SIZE = 85; // px per cell in source image
@@ -12,6 +13,7 @@ const img = new Image();
 img.src = "assets/flowers.png";
 
 let flowers = [];
+let spawnTick = 0;
 
 function randomLife() {
   return (
@@ -73,17 +75,20 @@ function removeFlower(flower) {
 }
 
 export function init() {
-  // Wait for image so background-image is valid before spawning
-  img.onload = function () {
-    for (let i = 0; i < FLOWER_COUNT; i++) {
-      flowers.push(spawnFlower());
-    }
-  };
-  // If already loaded (cached)
-  if (img.complete) img.onload();
+  flowers = [];
+  spawnTick = 0;
 }
 
 export function update() {
+  // Gradually spawn flowers up to MAX_FLOWER_COUNT, one every 10 seconds
+  if (flowers.length < MAX_FLOWER_COUNT) {
+    spawnTick++;
+    if (spawnTick >= FLOWER_SPAWN_INTERVAL) {
+      flowers.push(spawnFlower());
+      spawnTick = 0;
+    }
+  }
+
   for (let i = flowers.length - 1; i >= 0; i--) {
     const f = flowers[i];
 
@@ -105,7 +110,9 @@ export function update() {
       if (f.shrinkTick >= f.shrinkTicks) {
         removeFlower(f);
         flowers.splice(i, 1);
-        flowers.push(spawnFlower());
+        if (flowers.length < MAX_FLOWER_COUNT) {
+          flowers.push(spawnFlower());
+        }
       }
       continue;
     }
