@@ -1,7 +1,7 @@
 import { burst } from "./particles.js";
 
 const STAR_MIN_SIZE = 1.0; // scale when pointer is still
-const STAR_MAX_SIZE = 2.5; // scale when pointer is moving fast
+const STAR_MAX_SIZE = 2.0; // scale when pointer is moving fast
 const STAR_ROT_MIN_SPEED = 0.75; // degrees per frame when pointer is still
 const STAR_ROT_MAX_SPEED = 7.5; // degrees per frame when pointer is moving fast
 const STAR_LERP = 0.1; // how quickly star catches pointer (0=never, 1=instant)
@@ -38,9 +38,10 @@ export function update(targetX, targetY) {
   prevTargetX = targetX;
   prevTargetY = targetY;
 
-  const targetScale =
-    STAR_MIN_SIZE +
-    Math.min(pointerSpeed / 20, 1) * (STAR_MAX_SIZE - STAR_MIN_SIZE);
+  const targetScale = active
+    ? STAR_MIN_SIZE +
+      Math.min(pointerSpeed / 20, 1) * (STAR_MAX_SIZE - STAR_MIN_SIZE)
+    : STAR_MIN_SIZE;
   scale += (targetScale - scale) * 0.15;
 
   const rotSpeed =

@@ -4,7 +4,8 @@ const CAT_START_DIST = 200; // px from star before cat begins moving
 const CAT_STOP_DIST = 100; // px from star before cat stops moving
 const CAT_RUN_DIST = 400; // px from star before cat runs instead of walks
 const FRAME_W = 128; // display px per frame
-const TICKS_PER_FRAME_MOVING = 6; // ~10fps at 60fps
+const TICKS_PER_FRAME_RUNNING = 4;
+const TICKS_PER_FRAME_WALKING = 6;
 const TICKS_PER_FRAME_IDLE = 8;
 const IDLE_LICK_THRESHOLD = 20; // animation frames before lick triggers
 const SPRITES = {
@@ -83,7 +84,11 @@ export function update(starX, starY, active) {
 
   if (desiredSprite !== currentSprite) setSprite(desiredSprite);
 
-  const ticksPerFrame = moving ? TICKS_PER_FRAME_MOVING : TICKS_PER_FRAME_IDLE;
+  const ticksPerFrame = !moving
+    ? TICKS_PER_FRAME_IDLE
+    : dist > CAT_RUN_DIST
+      ? TICKS_PER_FRAME_RUNNING
+      : TICKS_PER_FRAME_WALKING;
 
   if (++frameTick >= ticksPerFrame) {
     frameTick = 0;
