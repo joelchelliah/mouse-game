@@ -1,26 +1,22 @@
+import { FPS } from "./config.js";
+
 const MAX_FLOWER_COUNT = 20;
-const FLOWER_SPAWN_INTERVAL = 10 * 60; // 10 seconds at 60fps
+const FLOWER_SPAWN_INTERVAL = 5 * FPS;
 const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
 const FLOWER_SRC_SIZE = 85; // px per cell in source image
-const FLOWER_DRAW_SIZE_RANGE = [20, 80]; // display px range
-const FLOWER_MIN_LIFE = 4 * 60; // 3 seconds at 60fps
-const FLOWER_MAX_LIFE = 12 * 60; // 8 seconds at 60fps
-const SHRINK_TICKS_RANGE = [30, 80]; // ticks to shrink out before removal
+const FLOWER_DRAW_SIZE_RANGE = [60, 100]; // display px range
+const FLOWER_MAX_LIFE = 10 * FPS; // ticks in expanded state before collapsing
+const SHRINK_TICKS_RANGE = [30, 80]; // ticks for each grow/shrink phase
 const FLOWER_MAX_ANGLE = 90; // max rotation in degrees during grow/shrink
+const FLOWER_DECAY_TIME = 3 * FPS; // ticks in collapsed state before dying
+const CAT_OVERLAP_RADIUS = 40; // px from flower center to trigger expand
 
 const img = new Image();
 img.src = "assets/flowers.png";
 
 let flowers = [];
 let spawnTick = 0;
-
-function randomLife() {
-  return (
-    FLOWER_MIN_LIFE +
-    Math.floor(Math.random() * (FLOWER_MAX_LIFE - FLOWER_MIN_LIFE + 1))
-  );
-}
 
 function spawnFlower() {
   const col = Math.floor(Math.random() * FLOWER_COLS);
@@ -50,23 +46,32 @@ function spawnFlower() {
   el.style.transform = "scale(0)";
   document.body.appendChild(el);
 
-  const startAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
-  const endAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
-
   const [minShrink, maxShrink] = SHRINK_TICKS_RANGE;
-  const shrinkTicks =
+  const phaseTicks =
     minShrink + Math.floor(Math.random() * (maxShrink - minShrink + 1));
+
+  // Each grow/shrink phase gets its own pair of angles
+  const collapseStartAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
+  const expandStartAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
+  const expandEndAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
+  const collapseEndAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
 
   return {
     el,
-    ticksLeft: randomLife(),
-    shrinking: false,
-    shrinkTick: 0,
-    shrinkTicks,
+    x: x + drawSize / 2, // center for overlap detection
+    y: y + drawSize / 2,
+    drawSize,
+    // state: "growing-collapsed" | "collapsed" | "growing-expanded" | "expanded" | "collapsing" | "shrinking"
+    state: "growing-collapsed",
     scale: 0,
-    growing: true,
-    startAngle,
-    endAngle,
+    phaseTick: 0,
+    phaseTicks,
+    expandedTicks: 0,
+    decayTick: 0,
+    collapseStartAngle,
+    expandStartAngle,
+    expandEndAngle,
+    collapseEndAngle,
   };
 }
 
@@ -76,10 +81,10 @@ function removeFlower(flower) {
 
 export function init() {
   flowers = [];
-  spawnTick = 0;
+  spawnTick = FLOWER_SPAWN_INTERVAL;
 }
 
-export function update() {
+export function update(catX, catY) {
   // Gradually spawn flowers up to MAX_FLOWER_COUNT, one every 10 seconds
   if (flowers.length < MAX_FLOWER_COUNT) {
     spawnTick++;
@@ -92,34 +97,113 @@ export function update() {
   for (let i = flowers.length - 1; i >= 0; i--) {
     const f = flowers[i];
 
-    if (f.growing) {
-      f.scale = Math.min(1, f.scale + 1 / f.shrinkTicks);
-      const angle = f.startAngle * (1 - f.scale);
-      f.el.style.transform =
-        "scale(" + f.scale.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
-      if (f.scale >= 1) f.growing = false;
-      continue;
-    }
-
-    if (f.shrinking) {
-      f.shrinkTick++;
-      const s = Math.max(0, 1 - f.shrinkTick / f.shrinkTicks);
-      const angle = f.endAngle * (1 - s);
-      f.el.style.transform =
-        "scale(" + s.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
-      if (f.shrinkTick >= f.shrinkTicks) {
-        removeFlower(f);
-        flowers.splice(i, 1);
-        if (flowers.length < MAX_FLOWER_COUNT) {
-          flowers.push(spawnFlower());
+    switch (f.state) {
+      case "growing-collapsed": {
+        // Grow from 0 → 0.5, with rotation from collapseStartAngle → 0
+        f.phaseTick++;
+        const t = Math.min(1, f.phaseTick / f.phaseTicks);
+        f.scale = t * 0.5;
+        const angle = f.collapseStartAngle * (1 - t);
+        f.el.style.transform =
+          "scale(" +
+          f.scale.toFixed(3) +
+          ") rotate(" +
+          angle.toFixed(2) +
+          "deg)";
+        if (t >= 1) {
+          f.state = "collapsed";
+          f.decayTick = 0;
         }
+        break;
       }
-      continue;
-    }
 
-    f.ticksLeft--;
-    if (f.ticksLeft <= 0) {
-      f.shrinking = true;
+      case "collapsed": {
+        // Check cat overlap → expand; otherwise decay
+        const dx = catX - f.x;
+        const dy = catY - f.y;
+        const dist = Math.hypot(dx, dy);
+        const threshold = f.drawSize / 2 + CAT_OVERLAP_RADIUS;
+        if (dist < threshold) {
+          f.state = "growing-expanded";
+          f.phaseTick = 0;
+        } else {
+          f.decayTick++;
+          if (f.decayTick >= FLOWER_DECAY_TIME) {
+            f.state = "shrinking";
+            f.phaseTick = 0;
+          }
+        }
+        break;
+      }
+
+      case "growing-expanded": {
+        // Grow from 0.5 → 1, with rotation from expandStartAngle → 0
+        f.phaseTick++;
+        const t = Math.min(1, f.phaseTick / f.phaseTicks);
+        f.scale = 0.5 + t * 0.5;
+        const angle = f.expandStartAngle * (1 - t);
+        f.el.style.transform =
+          "scale(" +
+          f.scale.toFixed(3) +
+          ") rotate(" +
+          angle.toFixed(2) +
+          "deg)";
+        if (t >= 1) {
+          f.state = "expanded";
+          f.expandedTicks = 0;
+        }
+        break;
+      }
+
+      case "expanded": {
+        f.expandedTicks++;
+        if (f.expandedTicks >= FLOWER_MAX_LIFE) {
+          f.state = "collapsing";
+          f.phaseTick = 0;
+        }
+        break;
+      }
+
+      case "collapsing": {
+        // Shrink from 1 → 0.5, with rotation from 0 → collapseEndAngle
+        f.phaseTick++;
+        const t = Math.min(1, f.phaseTick / f.phaseTicks);
+        f.scale = 1 - t * 0.5;
+        const angle = f.collapseEndAngle * t;
+        f.el.style.transform =
+          "scale(" +
+          f.scale.toFixed(3) +
+          ") rotate(" +
+          angle.toFixed(2) +
+          "deg)";
+        if (t >= 1) {
+          f.state = "collapsed";
+          f.decayTick = 0;
+        }
+        break;
+      }
+
+      case "shrinking": {
+        // Shrink from 0.5 → 0, with rotation from 0 → expandEndAngle
+        f.phaseTick++;
+        const t = Math.min(1, f.phaseTick / f.phaseTicks);
+        f.scale = 0.5 * (1 - t);
+        const angle = f.expandEndAngle * t;
+        f.el.style.transform =
+          "scale(" +
+          f.scale.toFixed(3) +
+          ") rotate(" +
+          angle.toFixed(2) +
+          "deg)";
+        if (t >= 1) {
+          removeFlower(f);
+          flowers.splice(i, 1);
+          if (flowers.length < MAX_FLOWER_COUNT) {
+            flowers.push(spawnFlower());
+          }
+        }
+        break;
+      }
     }
   }
 }

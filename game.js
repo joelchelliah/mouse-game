@@ -1,4 +1,4 @@
-import { update as updateCat } from "./cat.js";
+import { update as updateCat, x as catX, y as catY } from "./cat.js";
 import { update as updateStar, x as starX, y as starY, active as starActive } from "./star.js";
 import { init as initFlowers, update as updateFlowers } from "./flowers.js";
 import { update as updateParticles } from "./particles.js";
@@ -28,7 +28,7 @@ document.addEventListener(
 );
 
 function tick() {
-  updateFlowers();
+  updateFlowers(catX, catY);
   updateParticles();
   updateStar(targetX, targetY);
   updateCat(starX, starY, starActive);
