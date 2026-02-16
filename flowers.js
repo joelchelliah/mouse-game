@@ -11,6 +11,8 @@ const SHRINK_TICKS_RANGE = [30, 80]; // ticks for each grow/shrink phase
 const FLOWER_MAX_ANGLE = 90; // max rotation in degrees during grow/shrink
 const FLOWER_DECAY_TIME = 3 * FPS; // ticks in collapsed state before dying
 const CAT_OVERLAP_RADIUS = 40; // px from flower center to trigger expand
+const OPACITY_COLLAPSED = 0.6;
+const OPACITY_EXPANDED = 0.85;
 
 const img = new Image();
 img.src = "assets/flowers.png";
@@ -105,11 +107,8 @@ export function update(catX, catY) {
         f.scale = t * 0.5;
         const angle = f.collapseStartAngle * (1 - t);
         f.el.style.transform =
-          "scale(" +
-          f.scale.toFixed(3) +
-          ") rotate(" +
-          angle.toFixed(2) +
-          "deg)";
+          "scale(" + f.scale.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
+        f.el.style.opacity = OPACITY_COLLAPSED;
         if (t >= 1) {
           f.state = "collapsed";
           f.decayTick = 0;
@@ -143,11 +142,8 @@ export function update(catX, catY) {
         f.scale = 0.5 + t * 0.5;
         const angle = f.expandStartAngle * (1 - t);
         f.el.style.transform =
-          "scale(" +
-          f.scale.toFixed(3) +
-          ") rotate(" +
-          angle.toFixed(2) +
-          "deg)";
+          "scale(" + f.scale.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
+        f.el.style.opacity = (OPACITY_COLLAPSED + t * (OPACITY_EXPANDED - OPACITY_COLLAPSED)).toFixed(3);
         if (t >= 1) {
           f.state = "expanded";
           f.expandedTicks = 0;
@@ -156,6 +152,7 @@ export function update(catX, catY) {
       }
 
       case "expanded": {
+        f.el.style.opacity = OPACITY_EXPANDED;
         f.expandedTicks++;
         if (f.expandedTicks >= FLOWER_MAX_LIFE) {
           f.state = "collapsing";
@@ -171,11 +168,8 @@ export function update(catX, catY) {
         f.scale = 1 - t * 0.5;
         const angle = f.collapseEndAngle * t;
         f.el.style.transform =
-          "scale(" +
-          f.scale.toFixed(3) +
-          ") rotate(" +
-          angle.toFixed(2) +
-          "deg)";
+          "scale(" + f.scale.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
+        f.el.style.opacity = (OPACITY_EXPANDED - t * (OPACITY_EXPANDED - OPACITY_COLLAPSED)).toFixed(3);
         if (t >= 1) {
           f.state = "collapsed";
           f.decayTick = 0;
@@ -190,11 +184,8 @@ export function update(catX, catY) {
         f.scale = 0.5 * (1 - t);
         const angle = f.expandEndAngle * t;
         f.el.style.transform =
-          "scale(" +
-          f.scale.toFixed(3) +
-          ") rotate(" +
-          angle.toFixed(2) +
-          "deg)";
+          "scale(" + f.scale.toFixed(3) + ") rotate(" + angle.toFixed(2) + "deg)";
+        f.el.style.opacity = OPACITY_COLLAPSED;
         if (t >= 1) {
           removeFlower(f);
           flowers.splice(i, 1);
