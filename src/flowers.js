@@ -7,14 +7,14 @@ import {
   DEPTH_SCALE_BOTTOM,
 } from "./config.js";
 
-const MAX_FLOWER_COUNT = 30;
+const MAX_FLOWER_COUNT = 50;
 const FLOWER_SPAWN_INTERVAL = 2 * FPS;
 
 const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
 const FLOWER_SRC_SIZE = 85;
 
-const FLOWER_DRAW_SIZE_RANGE = [35, 50];
+const FLOWER_DRAW_SIZE_RANGE = [25, 40];
 const FLOWER_STATE_CHANGE_TICKS_RANGE = [20, 50];
 const FLOWER_MAX_ROTATION = 120;
 const CAT_OVERLAP_RADIUS = 40;
@@ -28,7 +28,7 @@ const AGED_GROWTH_PERCENTAGE = 0.5;
 const AGED_ROTATION_SPEED_RANGE = [-1, 1];
 
 // Depth tinting: flowers further away (low depth scale) appear darker
-const DEPTH_TINT_MIN = 0.4; // darkest brightness at top of screen
+const DEPTH_TINT_MIN = 0.3; // darkest brightness at top of screen
 const DEPTH_TINT_MAX = 1.0; // full brightness at bottom of screen
 
 function depthTint(y) {

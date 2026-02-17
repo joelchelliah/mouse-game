@@ -5,8 +5,8 @@ export const FPS = 60;
 // appear smaller; objects in the bottom rows (close) appear larger.
 // Tweak DEPTH_SCALE_TOP and DEPTH_SCALE_BOTTOM to taste.
 export const DEPTH_ROWS = 10;
-export const DEPTH_SCALE_TOP = 0.75; // scale multiplier at y = 0 (far away)
-export const DEPTH_SCALE_BOTTOM = 2.0; // scale multiplier at y = screen height (close)
+export const DEPTH_SCALE_TOP = 0.5; // scale multiplier at y = 0 (far away)
+export const DEPTH_SCALE_BOTTOM = 2.25; // scale multiplier at y = screen height (close)
 
 /**
  * Returns a depth-based scale multiplier for a given y position.
