@@ -1,0 +1,25 @@
+{
+  "name": "mouse-game",
+  "version": "1.0.0",
+  "description": "A simple game for LG Smart TV: a cat chases the Magic Remote pointer. Use the pointer on TV or your mouse on Mac.",
+  "main": "cat.js",
+  "scripts": {
+    "build": "esbuild src/game.js --bundle --outfile=bundle.js --platform=browser --minify",
+    "dev": "esbuild src/game.js --bundle --outfile=bundle.js --platform=browser --watch",
+    "stage": "rm -rf dist && mkdir dist && cp appinfo.json index.html style.css icon.png dist/ && cp -r assets dist/assets && cp bundle.js dist/bundle.js",
+    "package": "npm run stage && ares-package dist --no-minify",
+    "install:tv": "ares-install --device my-tv com.mousegame.app_1.0.0_all.ipk",
+    "launch:tv": "ares-launch --device my-tv com.mousegame.app",
+    "deploy:tv": "npm run build && npm run package && npm run install:tv && npm run launch:tv",
+    "install:sim": "ares-install -d simulator com.mousegame.app.catchase_1.0.0_all.ipk",
+    "launch:sim": "ares-launch -d simulator com.mousegame.app.catchase",
+    "deploy:sim": "npm run build && npm run package && npm run install:sim && npm run launch:sim"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.27.3",
+    "pixi.js": "^8.16.0"
+  }
+}
