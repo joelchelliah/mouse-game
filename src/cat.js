@@ -1,4 +1,4 @@
-import { AnimatedSprite, Assets, Container, Texture } from "pixi.js";
+import { AnimatedSprite, Assets, Container, Graphics, Texture } from "pixi.js";
 import { getDepthScale, getDepthSpeedScale } from "./config.js";
 
 const CAT_RUN_SPEED = 0.03;
@@ -14,6 +14,14 @@ const DISPLAY_SCALE = 4;
 const TICKS_PER_FRAME_RUNNING = 4;
 const TICKS_PER_FRAME_WALKING = 6;
 const TICKS_PER_FRAME_IDLE = 8;
+
+// Drop shadow (shown when close to the star)
+const SHADOW_COLOUR = 0x000000;
+const SHADOW_MAX_ALPHA = 0.35;
+const SHADOW_PROXIMITY_THRESHOLD = 200; // px — star distance at which shadow starts appearing
+const SHADOW_ELLIPSE_W = 7;  // half-width in source (16px) space — gets multiplied by DISPLAY_SCALE * depthScale
+const SHADOW_ELLIPSE_H = 2;  // half-height
+const SHADOW_OFFSET_Y = 8;   // how far below the cat centre the shadow sits (source px) — sprite is 16px tall so feet are at +8
 // How many idle frames to wait before playing alternate animations
 const IDLE_ALTERNATE_ANIMATIONS_THRESHOLD = 20;
 
@@ -29,6 +37,18 @@ const SPRITE_DEFS = {
 export const container = new Container();
 
 export const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+// Shadow ellipse — added first so it renders behind the cat sprites
+const shadowGfx = new Graphics();
+shadowGfx.alpha = 0;
+container.addChild(shadowGfx);
+
+function drawShadow() {
+  shadowGfx.clear();
+  shadowGfx
+    .ellipse(0, SHADOW_OFFSET_Y, SHADOW_ELLIPSE_W, SHADOW_ELLIPSE_H)
+    .fill({ color: SHADOW_COLOUR, alpha: 1 });
+}
 
 // local aliases for convenience
 let x = pos.x;
@@ -192,5 +212,13 @@ export function update(starX, starY, active) {
         }
       }
     }
+  }
+
+  // Drop shadow: fades in as the cat gets close to the star
+  const shadowT = Math.max(0, 1 - dist / SHADOW_PROXIMITY_THRESHOLD);
+  const targetShadowAlpha = active ? shadowT * SHADOW_MAX_ALPHA : 0;
+  shadowGfx.alpha += (targetShadowAlpha - shadowGfx.alpha) * 0.1;
+  if (shadowGfx.alpha > 0.001) {
+    drawShadow();
   }
 }

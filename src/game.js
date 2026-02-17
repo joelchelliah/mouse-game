@@ -103,7 +103,7 @@ const HINT_PADDING_BOTTOM = 24; // px from bottom edge
 
   // Game loop driven by Pixi's ticker
   app.ticker.add(() => {
-    updateFlowers(catPos.x, catPos.y);
+    updateFlowers(catPos.x, catPos.y, starState.x, starState.y);
     updateParticles();
     updateStar(targetX, targetY);
     updateCat(starState.x, starState.y, starState.active);

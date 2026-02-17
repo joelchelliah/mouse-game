@@ -1,4 +1,4 @@
-import { Assets, Container, Sprite, Texture } from "pixi.js";
+import { Assets, Container, Graphics, Sprite, Texture } from "pixi.js";
 import { ringBurst } from "./particles.js";
 import {
   FPS,
@@ -40,6 +40,11 @@ function depthTint(y) {
   const c = Math.round(brightness * 255);
   return (c << 16) | (c << 8) | c;
 }
+
+// Drop shadow (shown when close to the star)
+const SHADOW_COLOUR = 0x000000;
+const SHADOW_MAX_ALPHA = 0.3;
+const SHADOW_PROXIMITY_THRESHOLD = 200;
 
 // Falling physics
 const FALL_GRAVITY = 0.75;
@@ -98,15 +103,23 @@ function spawnFlower() {
   const fy =
     margin + Math.random() * (window.innerHeight - drawSize - margin * 2);
 
+  const cx = fx + drawSize / 2;
+  const cy = fy + drawSize / 2;
+
+  // Shadow ellipse — added before the sprite so it renders behind it
+  const shadowGfx = new Graphics();
+  shadowGfx.alpha = 0;
+  container.addChild(shadowGfx);
+
   const sprite = new Sprite(flowerTextures[row][col]);
   sprite.anchor.set(0.5);
-  sprite.x = fx + drawSize / 2;
-  sprite.y = fy + drawSize / 2;
+  sprite.x = cx;
+  sprite.y = cy;
   // Scale the sprite so FLOWER_SRC_SIZE maps to drawSize
   const s = drawSize / FLOWER_SRC_SIZE;
   sprite.scale.set(0); // start invisible
   sprite.alpha = OPACITY_BUD;
-  sprite.tint = depthTint(fy + drawSize / 2);
+  sprite.tint = depthTint(cy);
   container.addChild(sprite);
 
   const [minShrink, maxShrink] = FLOWER_STATE_CHANGE_TICKS_RANGE;
@@ -117,9 +130,10 @@ function spawnFlower() {
   const expandStartAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ROTATION;
   return {
     sprite,
+    shadowGfx,
     // Center position for cat overlap detection
-    x: fx + drawSize / 2,
-    y: fy + drawSize / 2,
+    x: cx,
+    y: cy,
     drawSize,
     naturalScale: s, // scale at which sprite is drawn at drawSize
     state: STATES.BUDDING,
@@ -140,7 +154,7 @@ function spawnFlower() {
   };
 }
 
-export function update(catX, catY) {
+export function update(catX, catY, starX, starY) {
   if (flowers.length < MAX_FLOWER_COUNT) {
     spawnTick++;
     if (spawnTick >= FLOWER_SPAWN_INTERVAL) {
@@ -241,12 +255,39 @@ export function update(catX, catY) {
         f.sprite.tint = depthTint(f.y);
 
         if (t >= 1) {
+          container.removeChild(f.shadowGfx);
+          f.shadowGfx.destroy();
           container.removeChild(f.sprite);
           f.sprite.destroy();
           flowers.splice(i, 1);
+          continue;
         }
         break;
       }
     }
+
+    // Update shadow (only reached if the flower was not removed above)
+    {
+      const sdx = starX - f.x;
+      const sdy = starY - f.y;
+      const starDist = Math.hypot(sdx, sdy);
+      const shadowT = Math.max(0, 1 - starDist / SHADOW_PROXIMITY_THRESHOLD);
+      const targetAlpha = shadowT * SHADOW_MAX_ALPHA * f.scale;
+      f.shadowGfx.alpha += (targetAlpha - f.shadowGfx.alpha) * 0.1;
+
+      if (f.shadowGfx.alpha > 0.001) {
+        // drawSize is the displayed width in screen pixels; scale shadow relative to that
+        const depthScale = getDepthScale(f.y);
+        const displaySize = f.drawSize * f.scale * depthScale;
+        const hw = displaySize * 0.5;
+        const hh = displaySize * 0.14;
+        const offsetY = displaySize * 0.45;
+        f.shadowGfx.clear();
+        f.shadowGfx
+          .ellipse(f.sprite.x, f.sprite.y + offsetY, hw, hh)
+          .fill({ color: SHADOW_COLOUR, alpha: 1 });
+      }
+    }
   }
 }
+
