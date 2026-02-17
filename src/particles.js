@@ -2,13 +2,15 @@ import { Container, Graphics } from "pixi.js";
 
 const BURST_COUNT_ACTIVE = 18;
 const BURST_COUNT_PASSIVE = 10;
-const BURST_SPEED_ACTIVE = 8;
+const BURST_SPEED_ACTIVE = 8;   // px/tick at full speed
 const BURST_SPEED_PASSIVE = 5;
-const PARTICLE_LIFE = 25;
-const PARTICLE_SIZE_ACTIVE = 12;
+const BURST_SPEED_VARIANCE = 0.6;  // minimum speed multiplier (range: VARIANCE → VARIANCE+0.8)
+const PARTICLE_LIFE = 25;          // ticks until fully faded
+const PARTICLE_SIZE_ACTIVE = 12;   // px diameter
 const PARTICLE_SIZE_PASSIVE = 8;
+const PARTICLE_DRAG = 0.92;        // velocity multiplier per tick (1 = no drag, 0 = instant stop)
 
-const COLOURS_ACTIVE = [0xffe066, 0xf0a500, 0xfff4a0, 0xffcc00];
+const COLOURS_ACTIVE  = [0xffe066, 0xf0a500, 0xfff4a0, 0xffcc00];
 const COLOURS_PASSIVE = [0xaad4ff, 0x6699cc, 0xcceeff, 0xffffff];
 
 export const container = new Container();
@@ -23,7 +25,7 @@ export function burst(originX, originY, toActive) {
 
   for (let i = 0; i < burstCount; i++) {
     const angle = (i / burstCount) * Math.PI * 2;
-    const speed = burstSpeed * (0.6 + Math.random() * 0.8);
+    const speed = burstSpeed * (BURST_SPEED_VARIANCE + Math.random() * 0.8);
     const vx = Math.cos(angle) * speed;
     const vy = Math.sin(angle) * speed;
     const colour = colours[Math.floor(Math.random() * colours.length)];
@@ -34,7 +36,14 @@ export function burst(originX, originY, toActive) {
     gfx.y = originY;
     container.addChild(gfx);
 
-    particles.push({ gfx, x: originX, y: originY, vx, vy, life: PARTICLE_LIFE });
+    particles.push({
+      gfx,
+      x: originX,
+      y: originY,
+      vx,
+      vy,
+      life: PARTICLE_LIFE,
+    });
   }
 }
 
@@ -43,8 +52,8 @@ export function update() {
     const p = particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.vx *= 0.92;
-    p.vy *= 0.92;
+    p.vx *= PARTICLE_DRAG;
+    p.vy *= PARTICLE_DRAG;
     p.life--;
 
     const progress = p.life / PARTICLE_LIFE;

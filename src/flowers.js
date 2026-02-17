@@ -1,11 +1,13 @@
-import { Assets, Container, Sprite, Spritesheet, Texture } from "pixi.js";
+import { Assets, Container, Sprite, Texture } from "pixi.js";
 import { FPS } from "./config.js";
 
 const MAX_FLOWER_COUNT = 20;
 const FLOWER_SPAWN_INTERVAL = 3 * FPS;
+
 const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
 const FLOWER_SRC_SIZE = 85;
+
 const FLOWER_DRAW_SIZE_RANGE = [60, 110];
 const FLOWER_MAX_LIFE = 10 * FPS;
 const SHRINK_TICKS_RANGE = [30, 80];
@@ -38,7 +40,7 @@ export async function init() {
             width: FLOWER_SRC_SIZE,
             height: FLOWER_SRC_SIZE,
           },
-        })
+        }),
       );
     }
     flowerTextures.push(rowArr);
@@ -54,8 +56,10 @@ function spawnFlower() {
   const [minSize, maxSize] = FLOWER_DRAW_SIZE_RANGE;
   const drawSize = minSize + Math.random() * (maxSize - minSize);
   const margin = maxSize;
-  const fx = margin + Math.random() * (window.innerWidth - drawSize - margin * 2);
-  const fy = margin + Math.random() * (window.innerHeight - drawSize - margin * 2);
+  const fx =
+    margin + Math.random() * (window.innerWidth - drawSize - margin * 2);
+  const fy =
+    margin + Math.random() * (window.innerHeight - drawSize - margin * 2);
 
   const sprite = new Sprite(flowerTextures[row][col]);
   sprite.anchor.set(0.5);
@@ -68,7 +72,8 @@ function spawnFlower() {
   container.addChild(sprite);
 
   const [minShrink, maxShrink] = SHRINK_TICKS_RANGE;
-  const phaseTicks = minShrink + Math.floor(Math.random() * (maxShrink - minShrink + 1));
+  const phaseTicks =
+    minShrink + Math.floor(Math.random() * (maxShrink - minShrink + 1));
 
   const collapseStartAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
   const expandStartAngle = (Math.random() - 0.5) * 2 * FLOWER_MAX_ANGLE;
@@ -148,7 +153,8 @@ export function update(catX, catY) {
         const angle = f.expandStartAngle * (1 - t);
         f.sprite.scale.set(f.scale * f.naturalScale);
         f.sprite.rotation = (angle * Math.PI) / 180;
-        f.sprite.alpha = OPACITY_COLLAPSED + t * (OPACITY_EXPANDED - OPACITY_COLLAPSED);
+        f.sprite.alpha =
+          OPACITY_COLLAPSED + t * (OPACITY_EXPANDED - OPACITY_COLLAPSED);
         if (t >= 1) {
           f.state = "expanded";
           f.expandedTicks = 0;
@@ -173,7 +179,8 @@ export function update(catX, catY) {
         const angle = f.collapseEndAngle * t;
         f.sprite.scale.set(f.scale * f.naturalScale);
         f.sprite.rotation = (angle * Math.PI) / 180;
-        f.sprite.alpha = OPACITY_EXPANDED - t * (OPACITY_EXPANDED - OPACITY_COLLAPSED);
+        f.sprite.alpha =
+          OPACITY_EXPANDED - t * (OPACITY_EXPANDED - OPACITY_COLLAPSED);
         if (t >= 1) {
           f.state = "collapsed";
           f.decayTick = 0;

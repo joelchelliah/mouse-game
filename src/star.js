@@ -1,7 +1,7 @@
 import { Container, Graphics } from "pixi.js";
 import { burst } from "./particles.js";
 
-const STAR_MIN_SIZE = 1.0;
+const STAR_MIN_SIZE = 0.5;
 const STAR_MAX_SIZE = 2.0;
 const STAR_ROT_MIN_SPEED = 0.75; // degrees per frame when pointer is still
 const STAR_ROT_MAX_SPEED = 7.5; // degrees per frame when pointer is moving fast
@@ -13,8 +13,21 @@ const STAR_INNER = 8;
 const STAR_POINTS = 5;
 
 const GLOW_RADIUS = 100;
-const BRIGHTNESS_MULTIPLIER = 0.04;
-const COLOUR = 0xffe066;
+const GLOW_COLOUR = 0xffe066;
+const GLOW_BRIGHTNESS = 0.04; // per-ring alpha multiplier — raise for brighter glow
+const GLOW_SCALE_MIN = 0.8; // glow circle scale at pulse trough
+const GLOW_SCALE_RANGE = 0.2; // how much the scale grows at pulse peak
+const GLOW_ALPHA_MIN = 0.6; // glow container alpha at pulse trough
+const GLOW_ALPHA_RANGE = 0.5; // how much alpha increases at pulse peak
+const GLOW_DRAW_ALPHA_MIN = 0.4; // inner drawLight alpha at pulse trough
+const GLOW_DRAW_ALPHA_RANGE = 0.2; // how much drawLight alpha increases at pulse peak
+
+const STAR_COLOUR = 0xffe066;
+const STAR_STROKE_COLOUR = 0xf0a500;
+const STAR_PASSIVE_ALPHA = 0.4;
+
+const SCALE_LERP = 0.15; // how quickly star scale catches target (0=never, 1=instant)
+const SPEED_NORMALISER = 20; // pointer px/tick that maps to full scale/rotation effect
 
 export const container = new Container();
 
@@ -36,7 +49,7 @@ function drawLight(radius, alpha) {
     const a = alpha * t * t;
     lightGfx
       .circle(0, 0, r)
-      .fill({ color: COLOUR, alpha: a * BRIGHTNESS_MULTIPLIER });
+      .fill({ color: GLOW_COLOUR, alpha: a * GLOW_BRIGHTNESS });
   }
 }
 
@@ -54,8 +67,8 @@ function drawStar() {
   }
   starGfx
     .poly(pts)
-    .fill(0xffe066)
-    .stroke({ color: 0xf0a500, width: 1.5, join: "round" });
+    .fill(STAR_COLOUR)
+    .stroke({ color: STAR_STROKE_COLOUR, width: 1.5, join: "round" });
 }
 drawStar();
 
@@ -96,13 +109,15 @@ export function update(targetX, targetY) {
 
   const targetScale = state.active
     ? STAR_MIN_SIZE +
-      Math.min(pointerSpeed / 20, 1) * (STAR_MAX_SIZE - STAR_MIN_SIZE)
+      Math.min(pointerSpeed / SPEED_NORMALISER, 1) *
+        (STAR_MAX_SIZE - STAR_MIN_SIZE)
     : STAR_MIN_SIZE;
-  scale += (targetScale - scale) * 0.15;
+  scale += (targetScale - scale) * SCALE_LERP;
 
   const rotSpeed =
     STAR_ROT_MIN_SPEED +
-    Math.min(pointerSpeed / 20, 1) * (STAR_ROT_MAX_SPEED - STAR_ROT_MIN_SPEED);
+    Math.min(pointerSpeed / SPEED_NORMALISER, 1) *
+      (STAR_ROT_MAX_SPEED - STAR_ROT_MIN_SPEED);
   angle = (angle + rotSpeed) % 360;
 
   // Pulsing brightness (replicates star-radiate CSS animation)
@@ -117,13 +132,19 @@ export function update(targetX, targetY) {
     starGfx.rotation = (angle * Math.PI) / 180;
     starGfx.alpha = 1;
     lightGfx.visible = true;
-    drawLight(GLOW_RADIUS, 0.4 + pulseFactor * 0.2);
-    lightGfx.scale.set(0.8 + pulseFactor * 0.2);
-    lightGfx.alpha = Math.min(0.6 + pulseFactor * 0.5, 1);
+    drawLight(
+      GLOW_RADIUS,
+      GLOW_DRAW_ALPHA_MIN + pulseFactor * GLOW_DRAW_ALPHA_RANGE,
+    );
+    lightGfx.scale.set(GLOW_SCALE_MIN + pulseFactor * GLOW_SCALE_RANGE);
+    lightGfx.alpha = Math.min(
+      GLOW_ALPHA_MIN + pulseFactor * GLOW_ALPHA_RANGE,
+      1,
+    );
   } else {
     starGfx.scale.set(STAR_MIN_SIZE);
     starGfx.rotation = (angle * Math.PI) / 180;
-    starGfx.alpha = 0.4;
+    starGfx.alpha = STAR_PASSIVE_ALPHA;
     lightGfx.visible = false;
   }
 }

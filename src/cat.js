@@ -1,24 +1,27 @@
-import { AnimatedSprite, Assets, Container, Spritesheet, Texture } from "pixi.js";
+import { AnimatedSprite, Assets, Container, Texture } from "pixi.js";
 
 const CAT_RUN_SPEED = 0.03;
 const CAT_WALK_SPEED = 0.015;
-const CAT_START_DIST = 200;
-const CAT_STOP_DIST = 100;
-const CAT_RUN_DIST = 400;
-const FRAME_W = 16;  // source pixels per frame
-const FRAME_H = 16;
-const DISPLAY_SCALE = 8; // scale up to 128px display size
+const CAT_RUN_THRESHOLD = 400; // When to start running
+const CAT_WALK_THRESHOLD = 200; // When to start walking
+const CAT_STOP_THRESHOLD = 100; // When to stop, while already walking
+
+const FRAME_WIDTH = 16;
+const FRAME_HEIGHT = 16;
+const DISPLAY_SCALE = 4;
+
 const TICKS_PER_FRAME_RUNNING = 4;
 const TICKS_PER_FRAME_WALKING = 6;
 const TICKS_PER_FRAME_IDLE = 8;
-const IDLE_LICK_THRESHOLD = 20;
+// How many idle frames to wait before playing alternate animations
+const IDLE_ALTERNATE_ANIMATIONS_THRESHOLD = 20;
 
 const SPRITE_DEFS = {
-  walk:  { url: "assets/cat/walk.png",  frames: 8 },
-  run:   { url: "assets/cat/run.png",   frames: 8 },
-  sit:   { url: "assets/cat/sit.png",   frames: 4 },
-  sit2:  { url: "assets/cat/sit2.png",  frames: 4 },
-  lick:  { url: "assets/cat/lick.png",  frames: 4 },
+  walk: { url: "assets/cat/walk.png", frames: 8 },
+  run: { url: "assets/cat/run.png", frames: 8 },
+  sit: { url: "assets/cat/sit.png", frames: 4 },
+  sit2: { url: "assets/cat/sit2.png", frames: 4 },
+  lick: { url: "assets/cat/lick.png", frames: 4 },
   lick2: { url: "assets/cat/lick2.png", frames: 4 },
 };
 
@@ -53,8 +56,13 @@ function buildAnimatedSprite(texture, frameCount) {
     textures.push(
       new Texture({
         source: texture.source,
-        frame: { x: i * FRAME_W, y: 0, width: FRAME_W, height: FRAME_H },
-      })
+        frame: {
+          x: i * FRAME_WIDTH,
+          y: 0,
+          width: FRAME_WIDTH,
+          height: FRAME_HEIGHT,
+        },
+      }),
     );
   }
   const anim = new AnimatedSprite(textures);
@@ -105,14 +113,14 @@ export function update(starX, starY, active) {
   const dist = Math.hypot(dx, dy);
 
   if (active) {
-    if (!moving && dist > CAT_START_DIST) moving = true;
-    if (moving && dist < CAT_STOP_DIST) moving = false;
+    if (!moving && dist > CAT_WALK_THRESHOLD) moving = true;
+    if (moving && dist < CAT_STOP_THRESHOLD) moving = false;
   } else {
     moving = false;
   }
 
   if (moving) {
-    const speed = dist > CAT_RUN_DIST ? CAT_RUN_SPEED : CAT_WALK_SPEED;
+    const speed = dist > CAT_RUN_THRESHOLD ? CAT_RUN_SPEED : CAT_WALK_SPEED;
     x += dx * speed;
     y += dy * speed;
     pos.x = x;
@@ -134,7 +142,7 @@ export function update(starX, starY, active) {
 
   // Determine desired sprite
   const desiredSprite = moving
-    ? dist > CAT_RUN_DIST
+    ? dist > CAT_RUN_THRESHOLD
       ? "run"
       : "walk"
     : idlePhase === "lick"
@@ -145,7 +153,7 @@ export function update(starX, starY, active) {
 
   const ticksPerFrame = !moving
     ? TICKS_PER_FRAME_IDLE
-    : dist > CAT_RUN_DIST
+    : dist > CAT_RUN_THRESHOLD
       ? TICKS_PER_FRAME_RUNNING
       : TICKS_PER_FRAME_WALKING;
 
@@ -167,7 +175,7 @@ export function update(starX, starY, active) {
           nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
         }
       } else {
-        if (idleFrames >= IDLE_LICK_THRESHOLD) {
+        if (idleFrames >= IDLE_ALTERNATE_ANIMATIONS_THRESHOLD) {
           idlePhase = "lick";
           lickPlaysLeft = 2;
           setSprite(Math.random() < 0.5 ? "lick" : "lick2");
