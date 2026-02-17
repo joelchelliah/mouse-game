@@ -2,9 +2,9 @@ import { AnimatedSprite, Assets, Container, Texture } from "pixi.js";
 
 const CAT_RUN_SPEED = 0.03;
 const CAT_WALK_SPEED = 0.015;
-const CAT_RUN_THRESHOLD = 400; // When to start running
-const CAT_WALK_THRESHOLD = 200; // When to start walking
-const CAT_STOP_THRESHOLD = 100; // When to stop, while already walking
+const CAT_RUN_THRESHOLD = 200; // When to start running
+const CAT_WALK_THRESHOLD = 100; // When to start walking
+const CAT_STOP_THRESHOLD = 50; // When to stop, while already walking
 
 const FRAME_WIDTH = 16;
 const FRAME_HEIGHT = 16;
