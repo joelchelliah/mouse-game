@@ -1,5 +1,10 @@
 import { Assets, Container, Sprite, Texture } from "pixi.js";
-import { FPS, getDepthScale } from "./config.js";
+import {
+  FPS,
+  getDepthScale,
+  DEPTH_SCALE_TOP,
+  DEPTH_SCALE_BOTTOM,
+} from "./config.js";
 
 const MAX_FLOWER_COUNT = 20;
 const FLOWER_SPAWN_INTERVAL = 3 * FPS;
@@ -8,18 +13,32 @@ const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
 const FLOWER_SRC_SIZE = 85;
 
-const FLOWER_DRAW_SIZE_RANGE = [30, 50];
+const FLOWER_DRAW_SIZE_RANGE = [35, 50];
 const FLOWER_STATE_CHANGE_TICKS_RANGE = [20, 50];
 const FLOWER_MAX_ROTATION = 120;
 const CAT_OVERLAP_RADIUS = 40;
 
 const OPACITY_BUD = 0.65;
-const OPACITY_BLOSSOM = 0.85;
+const OPACITY_BLOOMED = 0.85;
 
 const FLOWER_AGING_TIME = 2 * FPS;
 const OPACITY_AGED = 1;
 const AGED_GROWTH_PERCENTAGE = 0.5;
-const AGED_GROWTH_ROTATION = -90;
+const AGED_ROTATION_SPEED_RANGE = [-1, 1];
+
+// Depth tinting: flowers further away (low depth scale) appear darker
+const DEPTH_TINT_MIN = 0.4; // darkest brightness at top of screen
+const DEPTH_TINT_MAX = 1.0; // full brightness at bottom of screen
+
+function depthTint(y) {
+  const depthT =
+    (getDepthScale(y) - DEPTH_SCALE_TOP) /
+    (DEPTH_SCALE_BOTTOM - DEPTH_SCALE_TOP);
+  const brightness =
+    DEPTH_TINT_MIN + depthT * (DEPTH_TINT_MAX - DEPTH_TINT_MIN);
+  const c = Math.round(brightness * 255);
+  return (c << 16) | (c << 8) | c;
+}
 
 // Falling physics
 const FALL_GRAVITY = 0.75;
@@ -30,7 +49,7 @@ const STATES = {
   BUDDING: "budding",
   BUD: "bud",
   BLOOMING: "blooming",
-  BLOSSOM: "blossom",
+  BLOOMED: "bloomed",
   FALLING: "falling",
 };
 
@@ -86,6 +105,7 @@ function spawnFlower() {
   const s = drawSize / FLOWER_SRC_SIZE;
   sprite.scale.set(0); // start invisible
   sprite.alpha = OPACITY_BUD;
+  sprite.tint = depthTint(fy + drawSize / 2);
   container.addChild(sprite);
 
   const [minShrink, maxShrink] = FLOWER_STATE_CHANGE_TICKS_RANGE;
@@ -106,6 +126,11 @@ function spawnFlower() {
     phaseTick: 0,
     phaseTicks,
     agingTick: 0,
+    rotation: 0,
+    rotationSpeed:
+      AGED_ROTATION_SPEED_RANGE[0] +
+      Math.random() *
+        (AGED_ROTATION_SPEED_RANGE[1] - AGED_ROTATION_SPEED_RANGE[0]),
     collapseStartAngle,
     expandStartAngle,
     // Falling physics state
@@ -161,20 +186,25 @@ export function update(catX, catY) {
         const angle = f.expandStartAngle * (1 - t);
         f.sprite.scale.set(f.scale * f.naturalScale * getDepthScale(f.y));
         f.sprite.rotation = (angle * Math.PI) / 180;
-        f.sprite.alpha = OPACITY_BUD + t * (OPACITY_BLOSSOM - OPACITY_BUD);
+        f.sprite.alpha = OPACITY_BUD + t * (OPACITY_BLOOMED - OPACITY_BUD);
         if (t >= 1) {
-          f.state = STATES.BLOSSOM;
+          f.state = STATES.BLOOMED;
           f.agingTick = 0;
         }
         break;
       }
 
-      case STATES.BLOSSOM: {
+      case STATES.BLOOMED: {
         f.agingTick++;
         const t = Math.min(1, f.agingTick / FLOWER_AGING_TIME);
-        f.sprite.alpha = OPACITY_BLOSSOM + t * (OPACITY_AGED - OPACITY_BLOSSOM);
-        f.sprite.scale.set((1 + t * AGED_GROWTH_PERCENTAGE) * f.naturalScale * getDepthScale(f.y));
-        f.sprite.rotation = (t * AGED_GROWTH_ROTATION * Math.PI) / 180;
+        f.sprite.alpha = OPACITY_BLOOMED + t * (OPACITY_AGED - OPACITY_BLOOMED);
+        f.sprite.scale.set(
+          (1 + t * AGED_GROWTH_PERCENTAGE) *
+            f.naturalScale *
+            getDepthScale(f.y),
+        );
+        f.rotation += f.rotationSpeed;
+        f.sprite.rotation = (f.rotation * Math.PI) / 180;
 
         const dx = catX - f.x;
         const dy = catY - f.y;
@@ -206,6 +236,7 @@ export function update(catX, catY) {
         f.scale = 1 - t;
         f.sprite.scale.set(f.scale * f.naturalScale * getDepthScale(f.y));
         f.sprite.alpha = OPACITY_AGED * (1 - t);
+        f.sprite.tint = depthTint(f.y);
 
         if (t >= 1) {
           container.removeChild(f.sprite);
