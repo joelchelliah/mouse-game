@@ -14,9 +14,31 @@ const PARTICLE_DRAG = 0.92; // velocity multiplier per tick (1 = no drag, 0 = in
 const COLOURS_ACTIVE = [0xffe066, 0xf0a500, 0xfff4a0, 0xffcc00];
 const COLOURS_PASSIVE = [0xaad4ff, 0x6699cc, 0xcceeff, 0xffffff];
 
+const RING_LIFE = 30; // ticks until fully faded (lower = faster expansion)
+const RING_MAX_RADIUS = 60; // px at end of life
+const RING_THICKNESS = 4; // stroke width
+const RING_COLOURS = [0xff6633, 0xf0a500, 0x44aaff, 0xcc44ff, 0x33cc77];
+
 export const container = new Container();
 
 let particles = [];
+let rings = [];
+
+export function ringBurst(originX, originY) {
+  const gfx = new Graphics();
+  gfx.x = originX;
+  gfx.y = originY;
+  container.addChild(gfx);
+  const colour = RING_COLOURS[Math.floor(Math.random() * RING_COLOURS.length)];
+  rings.push({
+    gfx,
+    originX,
+    originY,
+    life: RING_LIFE,
+    depthScale: getDepthScale(originY),
+    colour,
+  });
+}
 
 export function burst(originX, originY, toActive) {
   const colours = toActive ? COLOURS_ACTIVE : COLOURS_PASSIVE;
@@ -50,6 +72,23 @@ export function burst(originX, originY, toActive) {
 }
 
 export function update() {
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i];
+    r.life--;
+    const progress = r.life / RING_LIFE;
+    const radius = (1 - progress) * RING_MAX_RADIUS * r.depthScale;
+    r.gfx.clear();
+    r.gfx
+      .circle(0, 0, radius)
+      .stroke({ width: RING_THICKNESS, color: r.colour, alpha: progress });
+
+    if (r.life <= 0) {
+      container.removeChild(r.gfx);
+      r.gfx.destroy();
+      rings.splice(i, 1);
+    }
+  }
+
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx;

@@ -1,4 +1,5 @@
 import { Assets, Container, Sprite, Texture } from "pixi.js";
+import { ringBurst } from "./particles.js";
 import {
   FPS,
   getDepthScale,
@@ -6,8 +7,8 @@ import {
   DEPTH_SCALE_BOTTOM,
 } from "./config.js";
 
-const MAX_FLOWER_COUNT = 20;
-const FLOWER_SPAWN_INTERVAL = 3 * FPS;
+const MAX_FLOWER_COUNT = 30;
+const FLOWER_SPAWN_INTERVAL = 2 * FPS;
 
 const FLOWER_COLS = 6;
 const FLOWER_ROWS = 6;
@@ -21,7 +22,7 @@ const CAT_OVERLAP_RADIUS = 40;
 const OPACITY_BUD = 0.65;
 const OPACITY_BLOOMED = 0.85;
 
-const FLOWER_AGING_TIME = 2 * FPS;
+const FLOWER_AGING_TIME = 1 * FPS;
 const OPACITY_AGED = 1;
 const AGED_GROWTH_PERCENTAGE = 0.5;
 const AGED_ROTATION_SPEED_RANGE = [-1, 1];
@@ -212,6 +213,7 @@ export function update(catX, catY) {
         const threshold = f.drawSize / 2 + CAT_OVERLAP_RADIUS;
         if (t >= 1 && dist < threshold) {
           f.state = STATES.FALLING;
+          ringBurst(f.x, f.y);
           const [minH, maxH] = FALL_HORIZONTAL_SPEED_RANGE;
           const hSpeed = minH + Math.random() * (maxH - minH);
           f.velX = (Math.random() < 0.5 ? -1 : 1) * hSpeed;
@@ -242,9 +244,6 @@ export function update(catX, catY) {
           container.removeChild(f.sprite);
           f.sprite.destroy();
           flowers.splice(i, 1);
-          if (flowers.length < MAX_FLOWER_COUNT) {
-            flowers.push(spawnFlower());
-          }
         }
         break;
       }
