@@ -1,5 +1,6 @@
 import { Container, Graphics } from "pixi.js";
 import { burst } from "./particles.js";
+import { getDepthScale } from "./config.js";
 
 const STAR_MIN_SIZE = 0.5;
 const STAR_MAX_SIZE = 2.0;
@@ -127,8 +128,10 @@ export function update(targetX, targetY) {
   container.x = x;
   container.y = y;
 
+  const depthScale = getDepthScale(y);
+
   if (state.active) {
-    starGfx.scale.set(scale);
+    starGfx.scale.set(scale * depthScale);
     starGfx.rotation = (angle * Math.PI) / 180;
     starGfx.alpha = 1;
     lightGfx.visible = true;
@@ -136,13 +139,13 @@ export function update(targetX, targetY) {
       GLOW_RADIUS,
       GLOW_DRAW_ALPHA_MIN + pulseFactor * GLOW_DRAW_ALPHA_RANGE,
     );
-    lightGfx.scale.set(GLOW_SCALE_MIN + pulseFactor * GLOW_SCALE_RANGE);
+    lightGfx.scale.set((GLOW_SCALE_MIN + pulseFactor * GLOW_SCALE_RANGE) * depthScale);
     lightGfx.alpha = Math.min(
       GLOW_ALPHA_MIN + pulseFactor * GLOW_ALPHA_RANGE,
       1,
     );
   } else {
-    starGfx.scale.set(STAR_MIN_SIZE);
+    starGfx.scale.set(STAR_MIN_SIZE * depthScale);
     starGfx.rotation = (angle * Math.PI) / 180;
     starGfx.alpha = STAR_PASSIVE_ALPHA;
     lightGfx.visible = false;

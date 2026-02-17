@@ -1,4 +1,5 @@
 import { AnimatedSprite, Assets, Container, Texture } from "pixi.js";
+import { getDepthScale, getDepthSpeedScale } from "./config.js";
 
 const CAT_RUN_SPEED = 0.03;
 const CAT_WALK_SPEED = 0.015;
@@ -112,25 +113,32 @@ export function update(starX, starY, active) {
   const dy = starY - y;
   const dist = Math.hypot(dx, dy);
 
+  const depthScale = getDepthScale(y);
+  const targetDepthScale = getDepthScale(starY);
+  const runThreshold = CAT_RUN_THRESHOLD * targetDepthScale;
+  const walkThreshold = CAT_WALK_THRESHOLD * targetDepthScale;
+  const stopThreshold = CAT_STOP_THRESHOLD * targetDepthScale;
+
   if (active) {
-    if (!moving && dist > CAT_WALK_THRESHOLD) moving = true;
-    if (moving && dist < CAT_STOP_THRESHOLD) moving = false;
+    if (!moving && dist > walkThreshold) moving = true;
+    if (moving && dist < stopThreshold) moving = false;
   } else {
     moving = false;
   }
 
   if (moving) {
-    const speed = dist > CAT_RUN_THRESHOLD ? CAT_RUN_SPEED : CAT_WALK_SPEED;
+    const speed = dist > runThreshold ? CAT_RUN_SPEED : CAT_WALK_SPEED;
     x += dx * speed;
-    y += dy * speed;
+    y += dy * speed * getDepthSpeedScale(y);
     pos.x = x;
     pos.y = y;
   }
-
   container.x = x;
   container.y = y;
   // Flip horizontally based on movement direction (preserve display scale)
-  container.scale.x = dx < 0 ? -DISPLAY_SCALE : DISPLAY_SCALE;
+  container.scale.x =
+    dx < 0 ? -DISPLAY_SCALE * depthScale : DISPLAY_SCALE * depthScale;
+  container.scale.y = DISPLAY_SCALE * depthScale;
 
   // Detect movement → idle transition and reset idle state
   const wasMoving = currentSpriteName === "walk" || currentSpriteName === "run";
@@ -142,7 +150,7 @@ export function update(starX, starY, active) {
 
   // Determine desired sprite
   const desiredSprite = moving
-    ? dist > CAT_RUN_THRESHOLD
+    ? dist > runThreshold
       ? "run"
       : "walk"
     : idlePhase === "lick"
@@ -153,7 +161,7 @@ export function update(starX, starY, active) {
 
   const ticksPerFrame = !moving
     ? TICKS_PER_FRAME_IDLE
-    : dist > CAT_RUN_THRESHOLD
+    : dist > runThreshold
       ? TICKS_PER_FRAME_RUNNING
       : TICKS_PER_FRAME_WALKING;
 

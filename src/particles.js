@@ -1,16 +1,17 @@
 import { Container, Graphics } from "pixi.js";
+import { getDepthScale } from "./config.js";
 
 const BURST_COUNT_ACTIVE = 18;
 const BURST_COUNT_PASSIVE = 10;
-const BURST_SPEED_ACTIVE = 8;   // px/tick at full speed
+const BURST_SPEED_ACTIVE = 8;
 const BURST_SPEED_PASSIVE = 5;
-const BURST_SPEED_VARIANCE = 0.6;  // minimum speed multiplier (range: VARIANCE → VARIANCE+0.8)
-const PARTICLE_LIFE = 25;          // ticks until fully faded
-const PARTICLE_SIZE_ACTIVE = 12;   // px diameter
+const BURST_SPEED_VARIANCE = 0.6; // minimum speed multiplier (range: VARIANCE → VARIANCE+0.8)
+const PARTICLE_LIFE = 25; // ticks until fully faded
+const PARTICLE_SIZE_ACTIVE = 12; // px diameter
 const PARTICLE_SIZE_PASSIVE = 8;
-const PARTICLE_DRAG = 0.92;        // velocity multiplier per tick (1 = no drag, 0 = instant stop)
+const PARTICLE_DRAG = 0.92; // velocity multiplier per tick (1 = no drag, 0 = instant stop)
 
-const COLOURS_ACTIVE  = [0xffe066, 0xf0a500, 0xfff4a0, 0xffcc00];
+const COLOURS_ACTIVE = [0xffe066, 0xf0a500, 0xfff4a0, 0xffcc00];
 const COLOURS_PASSIVE = [0xaad4ff, 0x6699cc, 0xcceeff, 0xffffff];
 
 export const container = new Container();
@@ -43,6 +44,7 @@ export function burst(originX, originY, toActive) {
       vx,
       vy,
       life: PARTICLE_LIFE,
+      depthScale: getDepthScale(originY),
     });
   }
 }
@@ -60,7 +62,7 @@ export function update() {
     p.gfx.x = p.x;
     p.gfx.y = p.y;
     p.gfx.alpha = progress;
-    p.gfx.scale.set(progress);
+    p.gfx.scale.set(progress * p.depthScale);
 
     if (p.life <= 0) {
       container.removeChild(p.gfx);

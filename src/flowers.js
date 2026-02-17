@@ -1,5 +1,5 @@
 import { Assets, Container, Sprite, Texture } from "pixi.js";
-import { FPS } from "./config.js";
+import { FPS, getDepthScale } from "./config.js";
 
 const MAX_FLOWER_COUNT = 20;
 const FLOWER_SPAWN_INTERVAL = 3 * FPS;
@@ -132,7 +132,7 @@ export function update(catX, catY) {
         const t = Math.min(1, f.phaseTick / f.phaseTicks);
         f.scale = t * 0.5;
         const angle = f.collapseStartAngle * (1 - t);
-        f.sprite.scale.set(f.scale * f.naturalScale);
+        f.sprite.scale.set(f.scale * f.naturalScale * getDepthScale(f.y));
         f.sprite.rotation = (angle * Math.PI) / 180;
         f.sprite.alpha = OPACITY_BUD;
         if (t >= 1) {
@@ -159,7 +159,7 @@ export function update(catX, catY) {
         const t = Math.min(1, f.phaseTick / f.phaseTicks);
         f.scale = 0.5 + t * 0.5;
         const angle = f.expandStartAngle * (1 - t);
-        f.sprite.scale.set(f.scale * f.naturalScale);
+        f.sprite.scale.set(f.scale * f.naturalScale * getDepthScale(f.y));
         f.sprite.rotation = (angle * Math.PI) / 180;
         f.sprite.alpha = OPACITY_BUD + t * (OPACITY_BLOSSOM - OPACITY_BUD);
         if (t >= 1) {
@@ -173,7 +173,7 @@ export function update(catX, catY) {
         f.agingTick++;
         const t = Math.min(1, f.agingTick / FLOWER_AGING_TIME);
         f.sprite.alpha = OPACITY_BLOSSOM + t * (OPACITY_AGED - OPACITY_BLOSSOM);
-        f.sprite.scale.set((1 + t * AGED_GROWTH_PERCENTAGE) * f.naturalScale);
+        f.sprite.scale.set((1 + t * AGED_GROWTH_PERCENTAGE) * f.naturalScale * getDepthScale(f.y));
         f.sprite.rotation = (t * AGED_GROWTH_ROTATION * Math.PI) / 180;
 
         const dx = catX - f.x;
@@ -204,7 +204,7 @@ export function update(catX, catY) {
         f.phaseTick++;
         const t = Math.min(1, f.phaseTick / f.phaseTicks);
         f.scale = 1 - t;
-        f.sprite.scale.set(f.scale * f.naturalScale);
+        f.sprite.scale.set(f.scale * f.naturalScale * getDepthScale(f.y));
         f.sprite.alpha = OPACITY_AGED * (1 - t);
 
         if (t >= 1) {

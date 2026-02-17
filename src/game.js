@@ -1,4 +1,4 @@
-import { Application, Text, TextStyle } from "pixi.js";
+import { Application, FillGradient, Graphics, Text, TextStyle } from "pixi.js";
 import {
   container as catContainer,
   init as initCat,
@@ -20,7 +20,8 @@ import {
   update as updateFlowers,
 } from "./flowers.js";
 
-const GRASS_COLOUR = 0x092815; // rgb(9, 40, 21)
+const BG_COLOUR_TOP = 0x0e1f0e; // dark, desaturated (far away)
+const BG_COLOUR_BOTTOM = 0x375c15; // richer green (close up)
 const HINT_FONT_SIZE = 20; // px
 const HINT_COLOUR = "rgba(255,255,255,0.5)";
 const HINT_PADDING_BOTTOM = 24; // px from bottom edge
@@ -30,7 +31,7 @@ const HINT_PADDING_BOTTOM = 24; // px from bottom edge
   await app.init({
     width: window.innerWidth,
     height: window.innerHeight,
-    backgroundColor: GRASS_COLOUR,
+    backgroundAlpha: 0,
     resolution: window.devicePixelRatio || 1,
     autoDensity: true,
     antialias: false,
@@ -38,7 +39,21 @@ const HINT_PADDING_BOTTOM = 24; // px from bottom edge
 
   document.body.appendChild(app.canvas);
 
-  // Layer order: flowers → cat → star/glow → particles → hint text
+  // Background gradient (far/dark at top → near/green at bottom)
+  const bgGradient = new FillGradient({
+    type: "linear",
+    start: { x: 0, y: 0 },
+    end: { x: 0, y: 1 },
+    gradientUnits: "global",
+  });
+  bgGradient.addColorStop(0, BG_COLOUR_TOP);
+  bgGradient.addColorStop(1, BG_COLOUR_BOTTOM);
+  const bg = new Graphics()
+    .rect(0, 0, app.screen.width, app.screen.height)
+    .fill(bgGradient);
+  app.stage.addChild(bg);
+
+  // Layer order: bg → flowers → cat → star/glow → particles → hint text
   app.stage.addChild(flowerContainer);
   app.stage.addChild(catContainer);
   app.stage.addChild(starContainer);
