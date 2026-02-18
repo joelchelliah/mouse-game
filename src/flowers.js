@@ -29,7 +29,7 @@ const AGED_GROWTH_PERCENTAGE = 0.5;
 const AGED_ROTATION_SPEED_RANGE = [-1, 1];
 
 // Depth tinting: flowers further away (low depth scale) appear darker
-const DEPTH_TINT_MIN = 0.3; // darkest brightness at top of screen
+const DEPTH_TINT_MIN = 0.75; // darkest brightness at top of screen
 const DEPTH_TINT_MAX = 1.0; // full brightness at bottom of screen
 
 function depthTint(y) {
@@ -104,7 +104,9 @@ function spawnFlower() {
   // Flowers only spawn on the grass — keep them below the sky/grass boundary
   const grassY = grassTop();
   const fy =
-    grassY + margin + Math.random() * (window.innerHeight - grassY - drawSize - margin * 2);
+    grassY +
+    margin +
+    Math.random() * (window.innerHeight - grassY - drawSize - margin * 2);
 
   const cx = fx + drawSize / 2;
   const cy = fy + drawSize / 2;
@@ -293,4 +295,3 @@ export function update(catX, catY, starX, starY) {
     }
   }
 }
-

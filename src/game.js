@@ -19,6 +19,11 @@ import {
   init as initFlowers,
   update as updateFlowers,
 } from "./flowers.js";
+import {
+  container as miniStarContainer,
+  init as initMiniStars,
+  update as updateMiniStars,
+} from "./miniStars.js";
 import { SKY_FRACTION } from "./config.js";
 
 // Sky colours (top → horizon)
@@ -112,7 +117,8 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
   );
   app.stage.addChild(bg);
 
-  // Layer order: bg → flowers → cat → star/glow → particles → hint text
+  // Layer order: bg → miniStars → flowers → cat → star/glow → particles → hint text
+  app.stage.addChild(miniStarContainer);
   app.stage.addChild(flowerContainer);
   app.stage.addChild(catContainer);
   app.stage.addChild(starContainer);
@@ -131,6 +137,7 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
   app.stage.addChild(hint);
 
   // Initialise async components (loads textures)
+  initMiniStars();
   await initFlowers();
   await initCat();
 
@@ -162,6 +169,7 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
 
   // Game loop driven by Pixi's ticker
   app.ticker.add(() => {
+    updateMiniStars();
     updateFlowers(catPos.x, catPos.y, starState.x, starState.y);
     updateParticles();
     updateStar(targetX, targetY);
