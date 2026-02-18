@@ -5,6 +5,7 @@ import {
   getDepthScale,
   DEPTH_SCALE_TOP,
   DEPTH_SCALE_BOTTOM,
+  grassTop,
 } from "./config.js";
 
 const MAX_FLOWER_COUNT = 50;
@@ -100,8 +101,10 @@ function spawnFlower() {
   const margin = maxSize;
   const fx =
     margin + Math.random() * (window.innerWidth - drawSize - margin * 2);
+  // Flowers only spawn on the grass — keep them below the sky/grass boundary
+  const grassY = grassTop();
   const fy =
-    margin + Math.random() * (window.innerHeight - drawSize - margin * 2);
+    grassY + margin + Math.random() * (window.innerHeight - grassY - drawSize - margin * 2);
 
   const cx = fx + drawSize / 2;
   const cy = fy + drawSize / 2;

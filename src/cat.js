@@ -1,5 +1,5 @@
 import { AnimatedSprite, Assets, Container, Graphics, Texture } from "pixi.js";
-import { getDepthScale, getDepthSpeedScale } from "./config.js";
+import { getDepthScale, getDepthSpeedScale, grassTop } from "./config.js";
 
 const CAT_RUN_SPEED = 0.03;
 const CAT_WALK_SPEED = 0.015;
@@ -19,9 +19,9 @@ const TICKS_PER_FRAME_IDLE = 8;
 const SHADOW_COLOUR = 0x000000;
 const SHADOW_MAX_ALPHA = 0.35;
 const SHADOW_PROXIMITY_THRESHOLD = 200; // px — star distance at which shadow starts appearing
-const SHADOW_ELLIPSE_W = 7;  // half-width in source (16px) space — gets multiplied by DISPLAY_SCALE * depthScale
-const SHADOW_ELLIPSE_H = 2;  // half-height
-const SHADOW_OFFSET_Y = 8;   // how far below the cat centre the shadow sits (source px) — sprite is 16px tall so feet are at +8
+const SHADOW_ELLIPSE_W = 7; // half-width in source (16px) space — gets multiplied by DISPLAY_SCALE * depthScale
+const SHADOW_ELLIPSE_H = 2; // half-height
+const SHADOW_OFFSET_Y = 8; // how far below the cat centre the shadow sits (source px) — sprite is 16px tall so feet are at +8
 // How many idle frames to wait before playing alternate animations
 const IDLE_ALTERNATE_ANIMATIONS_THRESHOLD = 20;
 
@@ -134,22 +134,29 @@ export function update(starX, starY, active) {
   const dist = Math.hypot(dx, dy);
 
   const depthScale = getDepthScale(y);
-  const targetDepthScale = getDepthScale(starY);
-  const runThreshold = CAT_RUN_THRESHOLD * targetDepthScale;
-  const walkThreshold = CAT_WALK_THRESHOLD * targetDepthScale;
-  const stopThreshold = CAT_STOP_THRESHOLD * targetDepthScale;
+  const runThreshold = CAT_RUN_THRESHOLD * depthScale;
+  const walkThreshold = CAT_WALK_THRESHOLD * depthScale;
+  const stopThreshold = CAT_STOP_THRESHOLD * depthScale;
+
+  // When the cat is pinned at the grass ceiling and the star is above it,
+  // the vertical gap inflates dist even though the cat can't close it.
+  // Use only |dx| for threshold decisions in that situation.
+  const atGrassCeiling = y <= grassTop() + 1 && starY < grassTop();
+  const effectiveDist = atGrassCeiling ? Math.abs(dx) : dist;
 
   if (active) {
-    if (!moving && dist > walkThreshold) moving = true;
-    if (moving && dist < stopThreshold) moving = false;
+    if (!moving && effectiveDist > walkThreshold) moving = true;
+    if (moving && effectiveDist < stopThreshold) moving = false;
   } else {
     moving = false;
   }
 
   if (moving) {
-    const speed = dist > runThreshold ? CAT_RUN_SPEED : CAT_WALK_SPEED;
+    const speed = effectiveDist > runThreshold ? CAT_RUN_SPEED : CAT_WALK_SPEED;
     x += dx * speed;
     y += dy * speed * getDepthSpeedScale(y);
+    // Clamp cat to the grass area — cannot go into the sky
+    y = Math.max(grassTop(), Math.min(window.innerHeight, y));
     pos.x = x;
     pos.y = y;
   }
@@ -170,7 +177,7 @@ export function update(starX, starY, active) {
 
   // Determine desired sprite
   const desiredSprite = moving
-    ? dist > runThreshold
+    ? effectiveDist > runThreshold
       ? "run"
       : "walk"
     : idlePhase === "lick"
@@ -181,7 +188,7 @@ export function update(starX, starY, active) {
 
   const ticksPerFrame = !moving
     ? TICKS_PER_FRAME_IDLE
-    : dist > runThreshold
+    : effectiveDist > runThreshold
       ? TICKS_PER_FRAME_RUNNING
       : TICKS_PER_FRAME_WALKING;
 
