@@ -12,8 +12,8 @@ const LIFETIME_MAX = 5 * FPS;
 const FADE_TICKS = 30;
 
 // Star shape — much smaller than the main star
-const STAR_OUTER = 3;
-const STAR_INNER = 1;
+const STAR_OUTER = 4;
+const STAR_INNER = 2;
 const STAR_POINTS = 5;
 const STAR_COLOUR = 0xffe066;
 const STAR_STROKE_COLOUR = 0xf0a500;

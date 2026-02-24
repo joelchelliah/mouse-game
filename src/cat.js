@@ -3,6 +3,9 @@ import { getDepthScale, getDepthSpeedScale, grassTop } from "./config.js";
 
 const CAT_RUN_SPEED = 0.03;
 const CAT_WALK_SPEED = 0.015;
+const CAT_JUMP_SPEED = 0.75; // Forward momentum during jump
+const CAT_JUMP_FORCE = -5; // Initial upward velocity
+const CAT_GRAVITY = 0.25; // Gravity constant for fall
 const CAT_RUN_THRESHOLD = 200; // When to start running
 const CAT_WALK_THRESHOLD = 100; // When to start walking
 const CAT_STOP_THRESHOLD = 50; // When to stop, while already walking
@@ -14,6 +17,8 @@ const DISPLAY_SCALE = 4;
 const TICKS_PER_FRAME_RUNNING = 4;
 const TICKS_PER_FRAME_WALKING = 6;
 const TICKS_PER_FRAME_IDLE = 8;
+const TICKS_PER_FRAME_JUMP = 5;
+const TICKS_PER_FRAME_FALL = 5;
 
 // Drop shadow (shown when close to the star)
 const SHADOW_COLOUR = 0x000000;
@@ -32,6 +37,8 @@ const SPRITE_DEFS = {
   sit2: { url: "assets/cat/sit2.png", frames: 4 },
   lick: { url: "assets/cat/lick.png", frames: 4 },
   lick2: { url: "assets/cat/lick2.png", frames: 4 },
+  jump: { url: "assets/cat/jump.png", frames: 3 },
+  fall: { url: "assets/cat/fall.png", frames: 4 },
 };
 
 export const container = new Container();
@@ -62,6 +69,12 @@ let idleFrames = 0;
 let lickPlaysLeft = 0;
 let idlePhase = "sit";
 let nextSitSprite = "sit";
+
+// Jump state machine
+let jumpState = "none"; // "none" | "jump" | "fall"
+let verticalVelocity = 0;
+let jumpDirection = 0; // Horizontal direction when jump started
+let groundLevel = 0; // Y position before jumping
 
 // Map of name → AnimatedSprite (populated during init)
 const sprites = {};
@@ -144,78 +157,163 @@ export function update(starX, starY, active) {
   const atGrassCeiling = y <= grassTop() + 1 && starY < grassTop();
   const effectiveDist = atGrassCeiling ? Math.abs(dx) : dist;
 
-  if (active) {
-    if (!moving && effectiveDist > walkThreshold) moving = true;
-    if (moving && effectiveDist < stopThreshold) moving = false;
-  } else {
-    moving = false;
-  }
+  // Only allow movement when not jumping/falling
+  if (jumpState === "none") {
+    if (active) {
+      if (!moving && effectiveDist > walkThreshold) moving = true;
+      if (moving && effectiveDist < stopThreshold) moving = false;
+    } else {
+      moving = false;
+    }
 
-  if (moving) {
-    const speed = effectiveDist > runThreshold ? CAT_RUN_SPEED : CAT_WALK_SPEED;
-    x += dx * speed;
-    y += dy * speed * getDepthSpeedScale(y);
-    // Clamp cat to the grass area — cannot go into the sky
-    y = Math.max(grassTop(), Math.min(window.innerHeight, y));
-    pos.x = x;
-    pos.y = y;
+    if (moving) {
+      const speed =
+        effectiveDist > runThreshold ? CAT_RUN_SPEED : CAT_WALK_SPEED;
+      x += dx * speed;
+      y += dy * speed * getDepthSpeedScale(y);
+      // Clamp cat to the grass area — cannot go into the sky
+      y = Math.max(grassTop(), Math.min(window.innerHeight, y));
+      pos.x = x;
+      pos.y = y;
+    }
   }
   container.x = x;
   container.y = y;
+
+  // Detect movement → idle/jump transition (only when star is active)
+  const wasMoving = currentSpriteName === "walk" || currentSpriteName === "run";
+  if (wasMoving && !moving && jumpState === "none" && active) {
+    // Start jump when transitioning from walk -> stop
+    jumpState = "jump";
+    verticalVelocity = CAT_JUMP_FORCE;
+    // Store the direction based on which way the sprite is facing
+    jumpDirection = container.scale.x < 0 ? -1 : 1;
+    groundLevel = y; // Store current ground position
+  }
+
   // Flip horizontally based on movement direction (preserve display scale)
-  container.scale.x =
-    dx < 0 ? -DISPLAY_SCALE * depthScale : DISPLAY_SCALE * depthScale;
+  // Only update facing direction when not jumping (preserve jump direction)
+  if (jumpState === "none") {
+    container.scale.x =
+      dx < 0 ? -DISPLAY_SCALE * depthScale : DISPLAY_SCALE * depthScale;
+  } else {
+    // Maintain facing direction during jump
+    container.scale.x =
+      jumpDirection < 0
+        ? -DISPLAY_SCALE * depthScale
+        : DISPLAY_SCALE * depthScale;
+  }
   container.scale.y = DISPLAY_SCALE * depthScale;
 
-  // Detect movement → idle transition and reset idle state
-  const wasMoving = currentSpriteName === "walk" || currentSpriteName === "run";
-  if (wasMoving && !moving) {
-    idleFrames = 0;
-    idlePhase = "sit";
-    nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
+  // Handle jump/fall physics
+  if (jumpState !== "none") {
+    // Apply horizontal momentum during jump/fall
+    const jumpSpeed = CAT_JUMP_SPEED * depthScale;
+    if (jumpDirection !== 0) {
+      x += Math.sign(jumpDirection) * jumpSpeed;
+    }
+
+    // Apply vertical velocity and gravity (gravity applies during jump too)
+    y += verticalVelocity;
+    verticalVelocity += CAT_GRAVITY;
+
+    // Transition from jump to fall when velocity becomes positive (going down)
+    if (jumpState === "jump" && verticalVelocity >= 0) {
+      jumpState = "fall";
+    }
+
+    // Check if landed (back at or below starting ground level)
+    if (jumpState === "fall" && y >= groundLevel) {
+      y = groundLevel;
+      // Don't reset jumpState yet - we need to play the landing frame first
+    }
+
+    pos.x = x;
+    pos.y = y;
   }
 
   // Determine desired sprite
-  const desiredSprite = moving
-    ? effectiveDist > runThreshold
-      ? "run"
-      : "walk"
-    : idlePhase === "lick"
-      ? currentSpriteName
-      : nextSitSprite;
+  const desiredSprite =
+    jumpState === "jump"
+      ? "jump"
+      : jumpState === "fall"
+        ? "fall"
+        : moving
+          ? effectiveDist > runThreshold
+            ? "run"
+            : "walk"
+          : idlePhase === "lick"
+            ? currentSpriteName
+            : nextSitSprite;
 
   if (desiredSprite !== currentSpriteName) setSprite(desiredSprite);
 
-  const ticksPerFrame = !moving
-    ? TICKS_PER_FRAME_IDLE
-    : effectiveDist > runThreshold
-      ? TICKS_PER_FRAME_RUNNING
-      : TICKS_PER_FRAME_WALKING;
+  const ticksPerFrame =
+    jumpState === "jump"
+      ? TICKS_PER_FRAME_JUMP
+      : jumpState === "fall"
+        ? TICKS_PER_FRAME_FALL
+        : !moving
+          ? TICKS_PER_FRAME_IDLE
+          : effectiveDist > runThreshold
+            ? TICKS_PER_FRAME_RUNNING
+            : TICKS_PER_FRAME_WALKING;
 
   if (++frameTick >= ticksPerFrame) {
     frameTick = 0;
     const totalFrames = SPRITE_DEFS[currentSpriteName].frames;
-    const nextFrame = (activeSprite.currentFrame + 1) % totalFrames;
-    activeSprite.gotoAndStop(nextFrame);
+    const currentFrame = activeSprite.currentFrame;
 
-    // On completing a full animation cycle (looped back to frame 0)
-    if (!moving && nextFrame === 0) {
-      idleFrames += totalFrames;
+    // Handle jump animation: hold on last frame until transitioning to fall
+    if (jumpState === "jump") {
+      if (currentFrame < totalFrames - 1) {
+        activeSprite.gotoAndStop(currentFrame + 1);
+      }
+      // Stay on last frame until jumpState changes to "fall"
+    }
+    // Handle fall animation: hold on second-last frame until landing
+    else if (jumpState === "fall") {
+      const hasLanded = y >= groundLevel;
+      if (!hasLanded && currentFrame < totalFrames - 2) {
+        // Play up to second-last frame
+        activeSprite.gotoAndStop(currentFrame + 1);
+      } else if (hasLanded && currentFrame === totalFrames - 2) {
+        // Play last frame when landing
+        activeSprite.gotoAndStop(totalFrames - 1);
+      } else if (hasLanded && currentFrame === totalFrames - 1) {
+        // After landing frame, transition to idle
+        jumpState = "none";
+        verticalVelocity = 0;
+        jumpDirection = 0;
+        idleFrames = 0;
+        idlePhase = "sit";
+        nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
+      }
+    }
+    // Normal animation advancement for other states
+    else {
+      const nextFrame = (currentFrame + 1) % totalFrames;
+      activeSprite.gotoAndStop(nextFrame);
 
-      if (idlePhase === "lick") {
-        lickPlaysLeft--;
-        if (lickPlaysLeft <= 0) {
-          idlePhase = "sit";
-          idleFrames = 0;
-          nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
-        }
-      } else {
-        if (idleFrames >= IDLE_ALTERNATE_ANIMATIONS_THRESHOLD) {
-          idlePhase = "lick";
-          lickPlaysLeft = 2;
-          setSprite(Math.random() < 0.5 ? "lick" : "lick2");
+      // On completing a full animation cycle (looped back to frame 0)
+      if (!moving && nextFrame === 0) {
+        idleFrames += totalFrames;
+
+        if (idlePhase === "lick") {
+          lickPlaysLeft--;
+          if (lickPlaysLeft <= 0) {
+            idlePhase = "sit";
+            idleFrames = 0;
+            nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
+          }
         } else {
-          nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
+          if (idleFrames >= IDLE_ALTERNATE_ANIMATIONS_THRESHOLD) {
+            idlePhase = "lick";
+            lickPlaysLeft = 2;
+            setSprite(Math.random() < 0.5 ? "lick" : "lick2");
+          } else {
+            nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";
+          }
         }
       }
     }
