@@ -6,6 +6,7 @@ const CAT_WALK_SPEED = 0.015;
 const CAT_JUMP_SPEED = 0.75; // Forward momentum during jump
 const CAT_JUMP_FORCE = -5; // Initial upward velocity
 const CAT_GRAVITY = 0.25; // Gravity constant for fall
+const CAT_JUMP_COOLDOWN = 1; // Seconds between jumps
 const CAT_RUN_THRESHOLD = 200; // When to start running
 const CAT_WALK_THRESHOLD = 100; // When to start walking
 const CAT_STOP_THRESHOLD = 50; // When to stop, while already walking
@@ -75,6 +76,8 @@ let jumpState = "none"; // "none" | "jump" | "fall"
 let verticalVelocity = 0;
 let jumpDirection = 0; // Horizontal direction when jump started
 let groundLevel = 0; // Y position before jumping
+let jumpCooldownTimer = 0; // Time remaining until next jump is allowed
+let lastCooldownTimer = 0; // Previous frame's cooldown value for detecting transition
 
 // Map of name → AnimatedSprite (populated during init)
 const sprites = {};
@@ -146,6 +149,13 @@ export function update(starX, starY, active) {
   const dy = starY - y;
   const dist = Math.hypot(dx, dy);
 
+  // Update jump cooldown timer (assuming 60fps, decrement in seconds)
+  lastCooldownTimer = jumpCooldownTimer;
+  if (jumpCooldownTimer > 0) {
+    jumpCooldownTimer -= 1 / 60;
+    if (jumpCooldownTimer < 0) jumpCooldownTimer = 0;
+  }
+
   const depthScale = getDepthScale(y);
   const runThreshold = CAT_RUN_THRESHOLD * depthScale;
   const walkThreshold = CAT_WALK_THRESHOLD * depthScale;
@@ -180,15 +190,26 @@ export function update(starX, starY, active) {
   container.x = x;
   container.y = y;
 
-  // Detect movement → idle/jump transition (only when star is active)
+  // Detect jump triggers (only when star is active)
   const wasMoving = currentSpriteName === "walk" || currentSpriteName === "run";
-  if (wasMoving && !moving && jumpState === "none" && active) {
-    // Start jump when transitioning from walk -> stop
+  const isStopped = !moving && jumpState === "none";
+  const cooldownJustExpired =
+    lastCooldownTimer > 0 && jumpCooldownTimer === 0 && isStopped;
+
+  // Jump when: (1) transitioning from walk->stop, OR (2) cooldown just expired while stopped
+  if (
+    active &&
+    jumpState === "none" &&
+    ((wasMoving && !moving) || cooldownJustExpired)
+  ) {
+    // Start jump
     jumpState = "jump";
     verticalVelocity = CAT_JUMP_FORCE;
     // Store the direction based on which way the sprite is facing
     jumpDirection = container.scale.x < 0 ? -1 : 1;
-    groundLevel = y; // Store current ground position
+    // Set landing position, but don't allow jumping into the sky
+    const targetGroundLevel = starY - 15;
+    groundLevel = Math.max(grassTop(), Math.min(targetGroundLevel, y));
   }
 
   // Flip horizontally based on movement direction (preserve display scale)
@@ -248,6 +269,16 @@ export function update(starX, starY, active) {
 
   if (desiredSprite !== currentSpriteName) setSprite(desiredSprite);
 
+  // Special handling: immediately show landing frame when cat touches ground during fall
+  if (
+    jumpState === "fall" &&
+    y >= groundLevel &&
+    activeSprite.currentFrame < SPRITE_DEFS["fall"].frames - 1
+  ) {
+    activeSprite.gotoAndStop(SPRITE_DEFS["fall"].frames - 1);
+    frameTick = 0; // Reset frame tick so landing frame displays for full duration
+  }
+
   const ticksPerFrame =
     jumpState === "jump"
       ? TICKS_PER_FRAME_JUMP
@@ -281,10 +312,11 @@ export function update(starX, starY, active) {
         // Play last frame when landing
         activeSprite.gotoAndStop(totalFrames - 1);
       } else if (hasLanded && currentFrame === totalFrames - 1) {
-        // After landing frame, transition to idle
+        // After landing frame, transition to idle and start cooldown
         jumpState = "none";
         verticalVelocity = 0;
         jumpDirection = 0;
+        jumpCooldownTimer = CAT_JUMP_COOLDOWN;
         idleFrames = 0;
         idlePhase = "sit";
         nextSitSprite = Math.random() < 0.5 ? "sit" : "sit2";

@@ -44,7 +44,7 @@ function depthTint(y) {
 
 // Drop shadow (shown when close to the star)
 const SHADOW_COLOUR = 0x000000;
-const SHADOW_MAX_ALPHA = 0.3;
+const SHADOW_MAX_ALPHA = 0.5;
 const SHADOW_PROXIMITY_THRESHOLD = 200;
 
 // Falling physics
@@ -187,6 +187,8 @@ export function update(catX, catY, starX, starY) {
       }
 
       case STATES.BUD: {
+        // Maintain scale at end of budding phase
+        f.scale = 0.5;
         const dx = catX - f.x;
         const dy = catY - f.y;
         const dist = Math.hypot(dx, dy);
@@ -217,12 +219,9 @@ export function update(catX, catY, starX, starY) {
       case STATES.BLOOMED: {
         f.agingTick++;
         const t = Math.min(1, f.agingTick / FLOWER_AGING_TIME);
+        f.scale = 1 + t * AGED_GROWTH_PERCENTAGE;
         f.sprite.alpha = OPACITY_BLOOMED + t * (OPACITY_AGED - OPACITY_BLOOMED);
-        f.sprite.scale.set(
-          (1 + t * AGED_GROWTH_PERCENTAGE) *
-            f.naturalScale *
-            getDepthScale(f.y),
-        );
+        f.sprite.scale.set(f.scale * f.naturalScale * getDepthScale(f.y));
         f.rotation += f.rotationSpeed;
         f.sprite.rotation = (f.rotation * Math.PI) / 180;
 
