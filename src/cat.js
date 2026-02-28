@@ -153,9 +153,14 @@ function setSprite(name) {
   activeSprite.gotoAndStop(0);
 }
 
-export function update(starX, starY, active) {
-  const dx = starX - x;
-  const dy = starY - y;
+export function update(starX, starY, active, animalOverlap = null) {
+  // Use animal position as target if overlapping, otherwise use star
+  const targetX = animalOverlap ? animalOverlap.x : starX;
+  const targetY = animalOverlap ? animalOverlap.y : starY;
+  const targetActive = active || animalOverlap !== null;
+
+  const dx = targetX - x;
+  const dy = targetY - y;
   const dist = Math.hypot(dx, dy);
   const depthScale = getDepthScale(y);
   const depthSpeedScale = getDepthSpeedScale(y);
@@ -166,17 +171,17 @@ export function update(starX, starY, active) {
   // Calculate effective distance for movement decisions
   const effectiveDist = movementController.calculateEffectiveDistance(
     { x, y },
-    { x: starX, y: starY },
+    { x: targetX, y: targetY },
     grassTop(),
   );
 
   // Only allow movement when not jumping/falling
   if (jumpController.isOnGround()) {
-    movementController.updateMovementState(effectiveDist, active, depthScale);
+    movementController.updateMovementState(effectiveDist, targetActive, depthScale);
 
     const movement = movementController.calculateMovement(
       { x, y },
-      { x: starX, y: starY },
+      { x: targetX, y: targetY },
       effectiveDist,
       depthScale,
       depthSpeedScale,
@@ -194,7 +199,7 @@ export function update(starX, starY, active) {
   container.x = x;
   container.y = y;
 
-  // Detect jump triggers (only when star is active)
+  // Detect jump triggers (when star is active OR overlapping with animal)
   const wasMoving = currentSpriteName === "walk" || currentSpriteName === "run";
   const isStopped =
     !movementController.getIsMoving() && jumpController.isOnGround();
@@ -202,14 +207,14 @@ export function update(starX, starY, active) {
 
   // Jump when: (1) transitioning from walk->stop, OR (2) cooldown just expired while stopped
   if (
-    active &&
+    targetActive &&
     jumpController.canJump() &&
     ((wasMoving && !movementController.getIsMoving()) || cooldownJustExpired)
   ) {
     // Store the direction based on which way the sprite is facing
     const direction = container.scale.x < 0 ? -1 : 1;
     // Set landing position, but don't allow jumping into the sky
-    const targetGroundLevel = starY - 15;
+    const targetGroundLevel = targetY - 15;
     jumpController.startJump(direction, targetGroundLevel, grassTop(), y);
   }
 

@@ -180,6 +180,9 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
     randomAnimalsController.update(catPos.x, catPos.y);
     updateParticles();
     updateStar(targetX, targetY);
-    updateCat(starState.x, starState.y, starState.active);
+
+    // Check if cat is overlapping with any animal
+    const animalOverlap = randomAnimalsController.checkCatOverlap(catPos.x, catPos.y);
+    updateCat(starState.x, starState.y, starState.active, animalOverlap);
   });
 })();

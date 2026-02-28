@@ -7,16 +7,16 @@ const FRAME_HEIGHT = 16;
 const DISPLAY_SCALE = 3;
 
 const WALK_SPEED_RANGE = [1, 3]; // Pixels per frame
-const RUN_SPEED_MULTIPLIER = 3; // How much faster running is than walking
+const RUN_SPEED_MULTIPLIER = 3.5; // How much faster running is than walking
 const TICKS_PER_FRAME_WALK = 6; // Animation speed for walking
 const TICKS_PER_FRAME_RUN = 4; // Animation speed for running
 const TICKS_PER_FRAME_HURT = 4; // Animation speed for hurt (initial playthrough)
-const OVERLAP_RADIUS = 60; // Collision detection radius with cat
+const OVERLAP_RADIUS = 50; // Collision detection radius with cat
 
 // Hurt jump physics (small backwards jump)
-const HURT_JUMP_FORCE = -3; // Small upward force
-const HURT_JUMP_SPEED = 0.3; // Slow backwards horizontal speed
-const HURT_GRAVITY = 0.2; // Lighter gravity for floaty feel
+const HURT_JUMP_FORCE = -5; // Small upward force
+const HURT_JUMP_SPEED = 1.5; // Slow backwards horizontal speed
+const HURT_GRAVITY = 0.4; // Lighter gravity for floaty feel
 
 /**
  * RandomAnimal - A single animal that walks across the screen.

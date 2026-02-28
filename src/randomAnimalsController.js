@@ -3,15 +3,18 @@ import { RandomAnimal } from "./randomAnimal.js";
 import { FPS, grassTop } from "./config.js";
 
 const MAX_ANIMAL_COUNT = 10;
-const ANIMAL_SPAWN_INTERVAL = 3 * FPS;
+const ANIMAL_SPAWN_INTERVAL = 2 * FPS;
 const SPAWN_MARGIN_BOTTOM = 150; // Pixels from bottom of screen to avoid spawning
 
-// Sprite definitions (reusing cat sprites for now)
-const SPRITE_DEFS = {
-  walk: { url: "assets/sheep/walk.png", frames: 6 },
-  run: { url: "assets/sheep/run.png", frames: 6 },
-  hurt: { url: "assets/sheep/hurt.png", frames: 4 },
-};
+const ANIMALS = ["sheep", "pig", "bird", "frog"];
+
+function getSpriteDefs(animal) {
+  return {
+    walk: { url: `assets/${animal}/walk.png`, frames: 6 },
+    run: { url: `assets/${animal}/run.png`, frames: 6 },
+    hurt: { url: `assets/${animal}/hurt.png`, frames: 4 },
+  };
+}
 
 /**
  * RandomAnimalsController - Manages spawning and updating random animals
@@ -22,23 +25,30 @@ export class RandomAnimalsController {
     this.container = new Container();
     this.animals = []; // Active animals
     this.spawnTimer = 0;
-    this.spriteTextures = {}; // Loaded textures
+    this.spriteTexturesByAnimal = {}; // Loaded textures organized by animal type
     this.initialized = false;
   }
 
   /**
-   * Initialize and load sprite assets.
+   * Initialize and load sprite assets for all animals.
    */
   async init() {
-    // Load sprite textures
-    for (const [name, def] of Object.entries(SPRITE_DEFS)) {
-      const texture = await Assets.load(def.url);
-      // Nearest-neighbour filtering keeps pixel art sharp when scaled up
-      texture.source.scaleMode = "nearest";
-      this.spriteTextures[name] = {
-        texture,
-        frames: def.frames,
-      };
+    // Load sprite textures for each animal type
+    for (const animalType of ANIMALS) {
+      const spriteDefs = getSpriteDefs(animalType);
+      const textures = {};
+
+      for (const [name, def] of Object.entries(spriteDefs)) {
+        const texture = await Assets.load(def.url);
+        // Nearest-neighbour filtering keeps pixel art sharp when scaled up
+        texture.source.scaleMode = "nearest";
+        textures[name] = {
+          texture,
+          frames: def.frames,
+        };
+      }
+
+      this.spriteTexturesByAnimal[animalType] = textures;
     }
 
     this.initialized = true;
@@ -51,6 +61,10 @@ export class RandomAnimalsController {
     if (this.animals.length >= MAX_ANIMAL_COUNT) return;
     if (!this.initialized) return;
 
+    // Random animal type
+    const animalType = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
+    const spriteTextures = this.spriteTexturesByAnimal[animalType];
+
     // Random Y position in the grass area (with bottom margin)
     const grassH = window.innerHeight - grassTop() - SPAWN_MARGIN_BOTTOM;
     const y = grassTop() + Math.random() * grassH;
@@ -62,8 +76,8 @@ export class RandomAnimalsController {
     const margin = 100;
     const startX = direction > 0 ? -margin : window.innerWidth + margin;
 
-    // Create and add the animal (pass all sprite textures)
-    const animal = new RandomAnimal(this.spriteTextures, startX, y, direction);
+    // Create and add the animal (pass sprite textures for this animal type)
+    const animal = new RandomAnimal(spriteTextures, startX, y, direction);
     this.animals.push(animal);
     this.container.addChild(animal.container);
   }
@@ -109,5 +123,22 @@ export class RandomAnimalsController {
    */
   getCount() {
     return this.animals.length;
+  }
+
+  /**
+   * Check if the cat is overlapping with any animal.
+   * Returns the position of the first animal being overlapped, or null.
+   * @param {number} catX - Cat's X position
+   * @param {number} catY - Cat's Y position
+   * @returns {object|null} - { x, y } of overlapped animal, or null
+   */
+  checkCatOverlap(catX, catY) {
+    for (const animal of this.animals) {
+      if (animal.checkCatCollision(catX, catY)) {
+        // Return the animal's position for the cat to jump towards
+        return { x: animal.x, y: animal.y };
+      }
+    }
+    return null;
   }
 }
