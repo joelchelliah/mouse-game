@@ -24,6 +24,7 @@ import {
   init as initMiniStars,
   update as updateMiniStars,
 } from "./miniStars.js";
+import { RandomAnimalsController } from "./randomAnimalsController.js";
 import { SKY_FRACTION } from "./config.js";
 
 // Sky colours (top → horizon)
@@ -117,9 +118,13 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
   );
   app.stage.addChild(bg);
 
-  // Layer order: bg → miniStars → flowers → cat → star/glow → particles → hint text
+  // Initialize random animals controller
+  const randomAnimalsController = new RandomAnimalsController();
+
+  // Layer order: bg → miniStars → flowers → randomAnimals → cat → star/glow → particles → hint text
   app.stage.addChild(miniStarContainer);
   app.stage.addChild(flowerContainer);
+  app.stage.addChild(randomAnimalsController.getContainer());
   app.stage.addChild(catContainer);
   app.stage.addChild(starContainer);
   app.stage.addChild(particleContainer);
@@ -140,6 +145,7 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
   initMiniStars();
   await initFlowers();
   await initCat();
+  await randomAnimalsController.init();
 
   // Input tracking
   let targetX = window.innerWidth / 2;
@@ -171,6 +177,7 @@ function drawBandedGradient(gfx, x, y, w, h, colourTop, colourBottom, bands) {
   app.ticker.add(() => {
     updateMiniStars();
     updateFlowers(catPos.x, catPos.y, starState.x, starState.y);
+    randomAnimalsController.update(catPos.x, catPos.y);
     updateParticles();
     updateStar(targetX, targetY);
     updateCat(starState.x, starState.y, starState.active);
