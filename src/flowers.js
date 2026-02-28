@@ -8,7 +8,7 @@ import {
   grassTop,
 } from "./config.js";
 
-const MAX_FLOWER_COUNT = 50;
+const MAX_FLOWER_COUNT = 75;
 const FLOWER_SPAWN_INTERVAL = 2 * FPS;
 
 const FLOWER_COLS = 6;
